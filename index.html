@@ -1,0 +1,1421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FraudDesq — Fidelity Bank</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-0:#08090d;--bg-1:#0d0f14;--bg-2:#121520;--bg-3:#181c28;--bg-4:#1e2333;
+  --border:rgba(255,255,255,0.065);--border-b:rgba(255,255,255,0.12);
+  --t0:#eef0f8;--t1:#8f99b2;--t2:#4e566e;
+  --blue:#4f8ef7;--bdim:rgba(79,142,247,0.13);
+  --teal:#2dd4bf;--tdim:rgba(45,212,191,0.12);
+  --green:#22c55e;--gdim:rgba(34,197,94,0.11);
+  --orange:#f97316;--odim:rgba(249,115,22,0.11);
+  --red:#ef4444;--rdim:rgba(239,68,68,0.11);
+  --yellow:#eab308;--ydim:rgba(234,179,8,0.11);
+  --purple:#a78bfa;--pdim:rgba(167,139,250,0.11);
+  --mono:'IBM Plex Mono',monospace;--sans:'IBM Plex Sans',sans-serif;
+  --sw:192px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;overflow:hidden}
+body{background:var(--bg-0);color:var(--t0);font-family:var(--sans);font-size:13px;display:flex;flex-direction:column}
+
+/* ── AUTH ── */
+.auth-wrap{position:fixed;inset:0;background:rgba(8,9,13,0.94);backdrop-filter:blur(12px);z-index:9999;display:flex;align-items:center;justify-content:center}
+.auth-wrap.gone{display:none}
+.auth-card{background:var(--bg-2);border:1px solid var(--border-b);border-radius:18px;padding:40px 44px;width:460px;box-shadow:0 50px 100px rgba(0,0,0,.7),0 0 0 1px rgba(79,142,247,0.06)}
+.auth-brand{display:flex;align-items:center;gap:11px;margin-bottom:30px}
+.brand-icon{width:36px;height:36px;background:linear-gradient(135deg,var(--blue),var(--teal));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;font-family:var(--mono);flex-shrink:0;box-shadow:0 4px 16px rgba(79,142,247,0.35)}
+.brand-name{font-size:16px;font-weight:700;color:var(--t0);letter-spacing:-.4px}
+.brand-sub{font-size:10px;color:var(--t2);text-transform:uppercase;letter-spacing:.6px;margin-top:1px}
+.auth-h{font-size:22px;font-weight:700;color:var(--t0);letter-spacing:-.5px;margin-bottom:7px}
+.auth-p{font-size:12.5px;color:var(--t1);line-height:1.6;margin-bottom:28px}
+.fl{display:block;font-size:10.5px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.fi{width:100%;padding:10px 14px;background:var(--bg-3);border:1px solid var(--border);border-radius:9px;color:var(--t0);font-family:var(--sans);font-size:13px;outline:none;transition:border .18s,background .18s;margin-bottom:14px}
+.fi:focus{border-color:var(--blue);background:var(--bg-4)}
+.fi::placeholder{color:var(--t2)}
+.auth-btn{width:100%;padding:12px;background:var(--blue);color:#fff;border:none;border-radius:9px;font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:2px;letter-spacing:.1px}
+.auth-btn:hover{background:#3b7ef5;box-shadow:0 8px 28px rgba(79,142,247,.35);transform:translateY(-1px)}
+.auth-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.auth-note{margin-top:20px;padding:13px 15px;background:var(--bdim);border:1px solid rgba(79,142,247,.18);border-radius:9px;font-size:11.5px;color:var(--blue);line-height:1.7}
+.auth-note strong{color:var(--t0)}
+.auth-err{background:var(--rdim);border:1px solid rgba(239,68,68,.2);color:var(--red);font-size:12px;padding:10px 13px;border-radius:7px;margin-bottom:14px;display:none}
+.demo-lnk{text-align:center;margin-top:14px;font-size:11px;color:var(--t2)}
+.demo-lnk span{color:var(--blue);cursor:pointer;transition:opacity .15s}
+.demo-lnk span:hover{opacity:.75}
+
+/* ── LAYOUT ── */
+.shell{display:flex;flex:1;overflow:hidden;height:calc(100vh)}
+
+/* ── SIDEBAR ── */
+.sidebar{width:var(--sw);min-width:var(--sw);background:var(--bg-1);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.sb-logo{padding:16px 14px 13px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:9px}
+.nav-s{padding:10px 7px 4px}
+.nav-lbl{font-size:9px;font-weight:700;letter-spacing:1.1px;color:var(--t2);text-transform:uppercase;padding:4px 9px 6px}
+.ni{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:7px;cursor:pointer;color:var(--t1);font-size:12.5px;font-weight:500;transition:all .14s;position:relative;margin-bottom:1px;user-select:none}
+.ni:hover{background:var(--bg-3);color:var(--t0)}
+.ni.on{background:var(--bdim);color:var(--blue)}
+.ni.on::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);width:3px;height:18px;background:var(--blue);border-radius:0 3px 3px 0}
+.ni-ico{width:15px;text-align:center;font-size:13px;flex-shrink:0}
+.ni-badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:700;padding:1px 5px;border-radius:10px;font-family:var(--mono)}
+.sb-foot{margin-top:auto;padding:11px 13px;border-top:1px solid var(--border);display:flex;align-items:center;gap:9px}
+.ava{width:29px;height:29px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0}
+
+/* ── MAIN ── */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+
+/* ── TOPBAR ── */
+.topbar{display:flex;align-items:center;gap:10px;padding:0 20px;height:50px;min-height:50px;border-bottom:1px solid var(--border);background:var(--bg-1);flex-shrink:0}
+.pg-title{font-size:15px;font-weight:700;color:var(--t0);letter-spacing:-.3px}
+.conn-badge{display:inline-flex;align-items:center;gap:5px;background:var(--gdim);border:1px solid rgba(34,197,94,.22);color:var(--green);font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;letter-spacing:.2px}
+.conn-badge::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--green);animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.mb-pill{font-size:10.5px;color:var(--t2);font-family:var(--mono);background:var(--bg-3);border:1px solid var(--border);padding:3px 9px;border-radius:4px;max-width:210px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tb-right{margin-left:auto;display:flex;align-items:center;gap:7px}
+.srch{display:flex;align-items:center;gap:7px;background:var(--bg-3);border:1px solid var(--border);border-radius:7px;padding:5px 10px;width:195px;transition:border .18s}
+.srch:focus-within{border-color:var(--blue)}
+.srch input{background:none;border:none;outline:none;color:var(--t0);font-family:var(--sans);font-size:12.5px;flex:1;min-width:0}
+.srch input::placeholder{color:var(--t2)}
+.ib{width:30px;height:30px;border-radius:6px;border:1px solid var(--border);background:var(--bg-3);cursor:pointer;color:var(--t1);display:flex;align-items:center;justify-content:center;font-size:14px;transition:all .14s;flex-shrink:0}
+.ib:hover{background:var(--bg-4);color:var(--t0)}
+.clock{font-size:11px;color:var(--t1);font-family:var(--mono);background:var(--bg-3);border:1px solid var(--border);padding:4px 9px;border-radius:5px;white-space:nowrap}
+
+/* ── LOGIC BANNER ── */
+.logic-bar{background:linear-gradient(90deg,rgba(79,142,247,.07),rgba(45,212,191,.04));border-bottom:1px solid rgba(79,142,247,.13);padding:5px 20px;display:flex;align-items:center;gap:6px;font-size:11px;color:var(--t2);flex-shrink:0;flex-wrap:wrap}
+.lchip{display:inline-flex;align-items:center;gap:4px;background:var(--bg-3);border:1px solid var(--border);padding:2px 8px;border-radius:4px;font-size:10.5px;color:var(--t1);font-family:var(--mono)}
+.lchip.on{border-color:rgba(79,142,247,.25);color:var(--blue);background:var(--bdim)}
+
+/* ── STATS ── */
+.stats{display:flex;gap:9px;padding:10px 20px;flex-shrink:0}
+.stat{flex:1;padding:11px 13px;background:var(--bg-2);border:1px solid var(--border);border-radius:8px;transition:border .2s}
+.stat:hover{border-color:var(--border-b)}
+.stat-lbl{font-size:9.5px;text-transform:uppercase;letter-spacing:.8px;color:var(--t2);font-weight:700;margin-bottom:4px}
+.stat-val{font-size:21px;font-weight:700;font-family:var(--mono);color:var(--t0);line-height:1}
+.stat-note{font-size:10px;margin-top:3px;color:var(--t2)}
+.stat-note.up{color:var(--green)}.stat-note.warn{color:var(--orange)}.stat-note.bad{color:var(--red)}
+
+/* ── TOOLBAR ── */
+.toolbar{display:flex;align-items:center;gap:7px;padding:9px 20px 0;flex-shrink:0;flex-wrap:wrap}
+.vbtn{display:flex;align-items:center;gap:5px;padding:5px 11px;border-radius:6px;font-size:12px;font-weight:500;cursor:pointer;border:1px solid var(--border);color:var(--t1);background:transparent;transition:all .14s;font-family:var(--sans)}
+.vbtn.on,.vbtn:hover{background:var(--bg-3);color:var(--t0);border-color:var(--border-b)}
+.divv{width:1px;height:18px;background:var(--border);margin:0 3px}
+.fsel{padding:5px 22px 5px 9px;border-radius:6px;background:var(--bg-3);border:1px solid var(--border);color:var(--t1);font-family:var(--sans);font-size:11.5px;cursor:pointer;outline:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='9' height='5'%3E%3Cpath d='M0 0l4.5 5L9 0z' fill='%234e566e'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 7px center}
+.btn-pbi{display:flex;align-items:center;gap:6px;padding:5px 12px;border-radius:7px;background:rgba(234,179,8,.1);color:var(--yellow);border:1px solid rgba(234,179,8,.22);font-family:var(--sans);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s}
+.btn-pbi:hover{background:rgba(234,179,8,.18)}
+.btn-new{display:flex;align-items:center;gap:6px;padding:5px 13px;border-radius:7px;background:var(--blue);color:#fff;border:none;font-family:var(--sans);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s}
+.btn-new:hover{background:#3b7ef5;box-shadow:0 3px 14px rgba(79,142,247,.3)}
+
+/* ── TABS ── */
+.tabs{display:flex;gap:2px;padding:9px 20px 0;flex-shrink:0}
+.tab{display:flex;align-items:center;gap:5px;padding:6px 13px;border-radius:6px 6px 0 0;font-size:12px;font-weight:500;cursor:pointer;color:var(--t1);border:1px solid transparent;border-bottom:none;transition:all .14s;user-select:none}
+.tab.on{background:var(--bg-2);color:var(--t0);border-color:var(--border)}
+.tab:hover:not(.on){color:var(--t0)}
+.tc{display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;font-family:var(--mono);min-width:17px;height:15px;padding:0 4px;border-radius:3px}
+.tc.o{background:var(--gdim);color:var(--green)}
+.tc.p{background:var(--bdim);color:var(--blue)}
+.tc.e{background:var(--odim);color:var(--orange)}
+.tc.c{background:rgba(78,86,110,.18);color:var(--t2)}
+
+/* ── TABLE ── */
+.tbl-wrap{flex:1;overflow:auto;margin:0 20px;background:var(--bg-2);border:1px solid var(--border);border-top:none;border-radius:0 0 10px 10px;min-height:0}
+table{width:100%;border-collapse:collapse}
+thead tr{border-bottom:1px solid var(--border);background:var(--bg-3);position:sticky;top:0;z-index:2}
+th{padding:8px 14px;text-align:left;font-size:10px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;color:var(--t2);white-space:nowrap;cursor:pointer;user-select:none;transition:color .14s}
+th:hover{color:var(--t1)}
+th.sort-asc::after{content:' ↑';color:var(--blue)}
+th.sort-desc::after{content:' ↓';color:var(--blue)}
+td{padding:9px 14px;font-size:12.5px;border-bottom:1px solid var(--border);color:var(--t0);white-space:nowrap;transition:background .12s}
+tr:last-child td{border-bottom:none}
+tr.r:hover td{background:rgba(255,255,255,.022);cursor:pointer}
+tr.r.sel td{background:var(--bdim)}
+.cid{font-family:var(--mono);font-size:11px;color:var(--blue);font-weight:500}
+.ctitle{max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.score-bar{display:flex;align-items:center;gap:7px}
+.score-num{font-family:var(--mono);font-size:11px;font-weight:600;min-width:22px}
+.score-track{width:54px;height:4px;background:var(--bg-4);border-radius:2px;overflow:hidden}
+.score-fill{height:100%;border-radius:2px;transition:width .3s}
+
+/* PRIORITY */
+.pri{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:4px;letter-spacing:.1px}
+.pri::before{content:'';width:5px;height:5px;border-radius:50%;display:inline-block;flex-shrink:0}
+.pri.critical{background:var(--rdim);color:var(--red)}.pri.critical::before{background:var(--red)}
+.pri.high{background:var(--odim);color:var(--orange)}.pri.high::before{background:var(--orange)}
+.pri.medium{background:var(--ydim);color:var(--yellow)}.pri.medium::before{background:var(--yellow)}
+.pri.low{background:var(--gdim);color:var(--green)}.pri.low::before{background:var(--green)}
+
+/* STATUS */
+.sb{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:4px}
+.sb::before{content:'';width:5px;height:5px;border-radius:50%;display:inline-block;flex-shrink:0}
+.sb.open{background:var(--gdim);color:var(--green)}.sb.open::before{background:var(--green)}
+.sb.in-progress{background:var(--bdim);color:var(--blue)}.sb.in-progress::before{background:var(--blue);animation:blink 1.4s infinite}
+.sb.escalated{background:var(--odim);color:var(--orange)}.sb.escalated::before{background:var(--orange);animation:blink 1s infinite}
+.sb.closed{background:rgba(78,86,110,.15);color:var(--t2)}.sb.closed::before{background:var(--t2)}
+.sb.pending{background:var(--pdim);color:var(--purple)}.sb.pending::before{background:var(--purple)}
+
+.amt{font-family:var(--mono);font-size:12px;font-weight:600}
+.dc{color:var(--t1);font-size:11px;font-family:var(--mono)}
+.ftype{font-size:11px;color:var(--t1);background:var(--bg-3);border:1px solid var(--border);padding:1px 7px;border-radius:3px;font-family:var(--mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px;display:inline-block}
+.empty{text-align:center;padding:60px;color:var(--t2)}
+
+/* ── PAGINATION ── */
+.pg-bar{display:flex;align-items:center;gap:7px;padding:7px 20px;border-top:1px solid var(--border);background:var(--bg-1);font-size:12px;color:var(--t1);flex-shrink:0}
+.pgb{padding:3px 9px;border-radius:5px;background:var(--bg-3);border:1px solid var(--border);color:var(--t1);cursor:pointer;font-size:11.5px;transition:all .13s;font-family:var(--sans)}
+.pgb:hover:not(:disabled){background:var(--bg-4);color:var(--t0)}
+.pgb:disabled{opacity:.28;cursor:not-allowed}
+.pgb.on{background:var(--bdim);color:var(--blue);border-color:rgba(79,142,247,.28)}
+.pg-inf{margin-left:auto;font-family:var(--mono);font-size:10.5px;color:var(--t2)}
+
+/* ── DETAIL PANEL ── */
+.panel{position:fixed;right:0;top:0;bottom:0;width:510px;background:var(--bg-2);border-left:1px solid var(--border-b);z-index:500;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .28s cubic-bezier(.4,0,.2,1);box-shadow:-24px 0 70px rgba(0,0,0,.45)}
+.panel.open{transform:translateX(0)}
+.pn-hd{padding:16px 18px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:10px;flex-shrink:0}
+.pn-x{margin-left:auto;cursor:pointer;width:26px;height:26px;display:flex;align-items:center;justify-content:center;border-radius:5px;color:var(--t2);font-size:16px;transition:all .13s;flex-shrink:0}
+.pn-x:hover{background:var(--bg-3);color:var(--t0)}
+.pn-body{flex:1;overflow-y:auto;padding:18px}
+.ds{margin-bottom:22px}
+.ds-t{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:1.1px;color:var(--t2);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.ds-t::after{content:'';flex:1;height:1px;background:var(--border)}
+.dg2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.dg3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.df .fl2{font-size:10px;color:var(--t2);margin-bottom:3px}
+.df .fv{font-size:13px;color:var(--t0);font-weight:500}
+.df .fv.mono{font-family:var(--mono);font-size:11.5px}
+
+/* SCORE BREAKDOWN */
+.score-card{background:var(--bg-3);border:1px solid var(--border);border-radius:9px;padding:14px;margin-bottom:14px}
+.score-big{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.score-circle{width:54px;height:54px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:20px;font-weight:700;flex-shrink:0;border:2px solid}
+.score-row{display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);font-size:11.5px}
+.score-row:last-child{border-bottom:none}
+.score-key{color:var(--t1);display:flex;align-items:center;gap:6px}
+.score-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.score-pts{font-family:var(--mono);font-size:11px;font-weight:600}
+.score-max{color:var(--t2);font-size:10px;margin-left:2px}
+
+/* EMAIL BOX */
+.email-box{background:var(--bg-3);border:1px solid var(--border);border-radius:8px;padding:13px}
+.email-from{font-size:11.5px;color:var(--t1);margin-bottom:3px}
+.email-subj{font-size:13px;font-weight:600;color:var(--t0);margin-bottom:8px;line-height:1.4}
+.email-body{font-size:11.5px;color:var(--t1);line-height:1.65;max-height:110px;overflow:hidden;position:relative}
+.email-body::after{content:'';position:absolute;bottom:0;left:0;right:0;height:32px;background:linear-gradient(transparent,var(--bg-3))}
+.full-body-btn{margin-top:8px;font-size:11px;color:var(--blue);cursor:pointer;display:inline-flex;align-items:center;gap:4px}
+.full-body-btn:hover{text-decoration:underline}
+
+/* AI BOX */
+.ai-box{background:linear-gradient(135deg,rgba(79,142,247,.07),rgba(45,212,191,.04));border:1px solid rgba(79,142,247,.18);border-radius:8px;padding:13px}
+.ai-lbl{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--blue);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.ai-txt{font-size:12px;color:var(--t0);line-height:1.65}
+
+/* AMOUNTS TABLE */
+.amt-table{width:100%;border-collapse:collapse;font-size:12px}
+.amt-table td{padding:5px 8px;border-bottom:1px solid var(--border)}
+.amt-table tr:last-child td{border-bottom:none}
+.amt-table td:first-child{color:var(--t1);font-size:11px}
+.amt-table td:last-child{font-family:var(--mono);font-weight:600;text-align:right}
+.amt-total{background:var(--bg-4) !important}
+.amt-total td{font-weight:700 !important;color:var(--t0) !important}
+
+/* TIMELINE */
+.tl-item{display:flex;gap:11px;padding-bottom:13px;position:relative}
+.tl-item::before{content:'';position:absolute;left:6px;top:16px;width:1px;bottom:0;background:var(--border)}
+.tl-item:last-child::before{display:none}
+.tl-dot{width:13px;height:13px;border-radius:50%;background:var(--bg-4);border:2px solid var(--border-b);flex-shrink:0;margin-top:2px}
+.tl-dot.b{border-color:var(--blue);background:var(--bdim)}
+.tl-dot.g{border-color:var(--green);background:var(--gdim)}
+.tl-dot.o{border-color:var(--orange);background:var(--odim)}
+.tl-act{font-size:12px;color:var(--t0);font-weight:500}
+.tl-meta{font-size:10.5px;color:var(--t2);margin-top:2px}
+
+/* PANEL ACTION BUTTONS */
+.pn-btns{display:flex;gap:7px;margin-top:4px}
+.pn-btns button{flex:1;padding:8px;border-radius:7px;font-family:var(--sans);font-size:12px;font-weight:600;cursor:pointer;border:none;transition:all .14s}
+.pb-prog{background:var(--blue);color:#fff}.pb-prog:hover{background:#3b7ef5}
+.pb-esc{background:var(--orange);color:#fff}.pb-esc:hover{filter:brightness(1.12)}
+.pb-cls{background:var(--bg-4);color:var(--t1);border:1px solid var(--border) !important}.pb-cls:hover{color:var(--t0)}
+
+/* ── MODALS ── */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.72);backdrop-filter:blur(5px);z-index:800;display:none;align-items:center;justify-content:center}
+.modal-bg.show{display:flex}
+.modal{background:var(--bg-2);border:1px solid var(--border-b);border-radius:13px;padding:28px;width:500px;box-shadow:0 30px 70px rgba(0,0,0,.6);max-height:92vh;overflow-y:auto}
+.modal-h{font-size:16px;font-weight:700;margin-bottom:5px;letter-spacing:-.3px}
+.modal-s{font-size:12.5px;color:var(--t1);margin-bottom:20px;line-height:1.5}
+.modal-foot{display:flex;gap:9px;justify-content:flex-end;margin-top:20px}
+.btn-sec{padding:8px 15px;border-radius:7px;background:var(--bg-3);border:1px solid var(--border);color:var(--t1);font-family:var(--sans);font-size:12.5px;cursor:pointer;transition:all .14s}
+.btn-sec:hover{color:var(--t0);background:var(--bg-4)}
+.btn-sm{padding:8px 15px;border-radius:7px;background:var(--blue);border:none;color:#fff;font-family:var(--sans);font-size:12.5px;font-weight:600;cursor:pointer;transition:all .15s}
+.btn-sm:hover{background:#3b7ef5}
+.btn-y{padding:8px 15px;border-radius:7px;background:rgba(234,179,8,.12);border:1px solid rgba(234,179,8,.28);color:var(--yellow);font-family:var(--sans);font-size:12.5px;font-weight:600;cursor:pointer;transition:all .15s}
+.btn-y:hover{background:rgba(234,179,8,.22)}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.fg{margin-bottom:13px}
+
+/* PBI */
+.pbi-s{background:var(--bg-3);border:1px solid var(--border);border-radius:8px;padding:13px;margin-bottom:13px}
+.pbi-st{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--t2);margin-bottom:9px}
+.pbi-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--border);font-size:12px}
+.pbi-row:last-child{border-bottom:none}
+.pbi-rl{color:var(--t1)}.pbi-rv{font-family:var(--mono);color:var(--t0);font-weight:600}
+.ef-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:11px}
+.ef-btn{padding:9px;border-radius:7px;background:var(--bg-4);border:1px solid var(--border);cursor:pointer;transition:all .14s;text-align:center}
+.ef-btn:hover,.ef-btn.sel{border-color:rgba(234,179,8,.35);background:rgba(234,179,8,.07)}
+.ef-ico{font-size:18px;margin-bottom:3px}.ef-nm{font-size:12px;font-weight:600;color:var(--t0)}.ef-ds{font-size:10px;color:var(--t2);margin-top:2px}
+
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
+.row-in{animation:fadeUp .3s ease both}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-thumb{background:var(--bg-4);border-radius:2px}
+</style>
+</head>
+<body>
+
+<!-- AUTH -->
+<div class="auth-wrap" id="authWrap">
+  <div class="auth-card">
+    <div class="auth-brand">
+      <div class="brand-icon">FD</div>
+      <div>
+        <div class="brand-name">FraudDesq</div>
+        <div class="brand-sub">Fidelity Bank &middot; Fraud Intelligence</div>
+      </div>
+    </div>
+    <div class="auth-h">Connect Outlook Mailbox</div>
+    <div class="auth-p">Enter your Microsoft credentials to connect FraudDesq to the shared fraud inbox. Smart classification engine auto-scores every email by priority, status and exposure amount.</div>
+    <div class="auth-err" id="authErr"></div>
+    <div class="fg"><label class="fl">Shared Mailbox Address</label><input class="fi" type="text" id="inpMb" placeholder="fraud@fidelitybank.com" autocomplete="off"></div>
+    <div class="fg"><label class="fl">Azure AD Tenant ID</label><input class="fi" type="text" id="inpTid" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"></div>
+    <div class="fg"><label class="fl">App Client ID</label><input class="fi" type="text" id="inpCid" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"></div>
+    <button class="auth-btn" id="authBtn" onclick="doConnect()">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="2" y="2" width="9" height="9" rx="1.5"/><rect x="13" y="2" width="9" height="9" rx="1.5"/><rect x="2" y="13" width="9" height="9" rx="1.5"/><rect x="13" y="13" width="9" height="9" rx="1.5"/></svg>
+      Connect via Microsoft OAuth
+    </button>
+    <div class="auth-note">
+      <strong>Smart Classification Engine &mdash; what happens after connect:</strong><br>
+      &#10112; Full email body fetched via Graph API &nbsp;&#10113; Priority scored across 6 weighted signals &nbsp;&#10114; Status derived from subject + body keywords &nbsp;&#10115; All &#8358; amounts extracted &amp; summed &nbsp;&#10116; Fraud type classified by pattern matching
+    </div>
+    <div class="demo-lnk">No credentials? <span onclick="runDemo()">Load demo mode &rarr;</span></div>
+  </div>
+</div>
+
+<!-- APP SHELL -->
+<div class="shell">
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="sb-logo">
+    <div class="brand-icon" style="width:28px;height:28px;font-size:12px">FD</div>
+    <div>
+      <div class="brand-name" style="font-size:13px">FraudDesq</div>
+      <div class="brand-sub" style="font-size:9px">Fidelity Bank</div>
+    </div>
+  </div>
+  <div class="nav-s">
+    <div class="nav-lbl">Monitoring</div>
+    <div class="ni" onclick="navTo(this)"><span class="ni-ico">&#11041;</span> Dashboard</div>
+    <div class="ni" onclick="navTo(this)"><span class="ni-ico">&#9889;</span> Transactions <span class="ni-badge">3</span></div>
+  </div>
+  <div class="nav-s">
+    <div class="nav-lbl">Intelligence</div>
+    <div class="ni" onclick="navTo(this)"><span class="ni-ico">&#10696;</span> Risk Sniper</div>
+    <div class="ni" onclick="navTo(this)"><span class="ni-ico">&#10763;</span> Decision Engine</div>
+  </div>
+  <div class="nav-s">
+    <div class="nav-lbl">Operations</div>
+    <div class="ni on" onclick="navTo(this)"><span class="ni-ico">&#10782;</span> Case Management</div>
+    <div class="ni" onclick="navTo(this)"><span class="ni-ico">&#9707;</span> Analytics</div>
+    <div class="ni" onclick="navTo(this)" id="pbiNav" onclick="openPBI()"><span class="ni-ico">&#128202;</span> Power BI</div>
+    <div class="ni" onclick="navTo(this)"><span class="ni-ico">&#9881;</span> Settings</div>
+  </div>
+  <div class="sb-foot">
+    <div class="ava">MA</div>
+    <div>
+      <div style="font-size:12px;font-weight:600;color:var(--t0)">Muhammed A.</div>
+      <div style="font-size:10px;color:var(--t2)">Security Analyst</div>
+    </div>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div class="pg-title">Case Management</div>
+    <span class="conn-badge" id="connBadge" style="display:none">Connected</span>
+    <span class="mb-pill" id="mbPill" style="display:none"></span>
+    <div style="margin-left:6px">
+      <div class="srch"><span style="color:var(--t2);font-size:12px">&#9906;</span><input type="text" placeholder="Search cases..." id="srchInp" oninput="doFilter()"></div>
+    </div>
+    <div class="tb-right">
+      <div class="clock" id="clockEl"></div>
+      <div class="ib" style="color:var(--yellow);font-size:11px" onclick="openPBI()" title="Power BI">&#128202;</div>
+      <div class="ib" id="syncIco" onclick="doSync()" title="Sync">&#8635;</div>
+      <div class="ib" style="color:var(--blue);font-size:11px;font-weight:700">&#8862;</div>
+      <div class="ava" style="width:28px;height:28px;font-size:10px">MA</div>
+    </div>
+  </div>
+
+  <!-- LOGIC INDICATOR BAR -->
+  <div class="logic-bar">
+    <span style="font-weight:600;color:var(--t1)">Classification engine:</span>
+    <span class="lchip on">&#10003; Priority scoring (6 signals)</span>
+    <span class="lchip on">&#10003; Keyword status detection</span>
+    <span class="lchip on">&#10003; Multi-amount extraction</span>
+    <span class="lchip on">&#10003; Full body fetch</span>
+    <span class="lchip on">&#10003; Sender trust scoring</span>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats">
+    <div class="stat"><div class="stat-lbl">Total Cases</div><div class="stat-val" id="sTotal">0</div><div class="stat-note up" id="sTotalN">&#8593; Loading</div></div>
+    <div class="stat"><div class="stat-lbl">Open</div><div class="stat-val" id="sOpen" style="color:var(--green)">0</div><div class="stat-note">New / unhandled</div></div>
+    <div class="stat"><div class="stat-lbl">In Progress</div><div class="stat-val" id="sProg" style="color:var(--blue)">0</div><div class="stat-note">Being investigated</div></div>
+    <div class="stat"><div class="stat-lbl">Escalated</div><div class="stat-val" id="sEsc" style="color:var(--orange)">0</div><div class="stat-note warn" id="sEscN">Priority action</div></div>
+    <div class="stat"><div class="stat-lbl">Closed</div><div class="stat-val" id="sClosed" style="color:var(--t2)">0</div><div class="stat-note">Resolved</div></div>
+    <div class="stat"><div class="stat-lbl">Total Exposure</div><div class="stat-val" id="sExp" style="color:var(--red);font-size:15px">&#8358;0</div><div class="stat-note bad">&#8358; At risk</div></div>
+  </div>
+
+  <!-- TOOLBAR -->
+  <div class="toolbar">
+    <button class="vbtn on">&#10782; Table</button>
+    <button class="vbtn">&#10783; Kanban</button>
+    <div class="divv"></div>
+    <select class="fsel" id="fStat" onchange="doFilter()">
+      <option value="">All Statuses</option><option value="open">Open</option>
+      <option value="in-progress">In Progress</option><option value="escalated">Escalated</option>
+      <option value="closed">Closed</option><option value="pending">Pending Review</option>
+    </select>
+    <select class="fsel" id="fPri" onchange="doFilter()">
+      <option value="">All Priorities</option><option value="critical">Critical</option>
+      <option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option>
+    </select>
+    <select class="fsel" id="fType" onchange="doFilter()">
+      <option value="">All Fraud Types</option>
+    </select>
+    <button class="btn-pbi" onclick="openPBI()">&#128202; Power BI</button>
+    <button class="btn-new" onclick="openNewCase()">+ New Case</button>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <div class="tab on" onclick="setTab(this,'all')">All <span class="tc o" id="tAll">0</span></div>
+    <div class="tab" onclick="setTab(this,'open')">Open <span class="tc o" id="tOpen">0</span></div>
+    <div class="tab" onclick="setTab(this,'in-progress')">In Progress <span class="tc p" id="tProg">0</span></div>
+    <div class="tab" onclick="setTab(this,'escalated')">Escalated <span class="tc e" id="tEsc">0</span></div>
+    <div class="tab" onclick="setTab(this,'closed')">Closed <span class="tc c" id="tClosed">0</span></div>
+  </div>
+
+  <!-- TABLE -->
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr>
+        <th onclick="doSort('id')">CASE ID</th>
+        <th onclick="doSort('title')">TITLE</th>
+        <th onclick="doSort('fraudType')">FRAUD TYPE</th>
+        <th onclick="doSort('priority')">PRIORITY</th>
+        <th onclick="doSort('score')">RISK SCORE</th>
+        <th onclick="doSort('status')">STATUS</th>
+        <th onclick="doSort('date')">DATE</th>
+        <th onclick="doSort('amount')">TOTAL EXPOSURE</th>
+      </tr></thead>
+      <tbody id="tBody">
+        <tr><td colspan="8" style="text-align:center;padding:50px;color:var(--t2)">
+          <span style="display:inline-block;width:13px;height:13px;border:2px solid var(--border-b);border-top-color:var(--blue);border-radius:50%;animation:spin .7s linear infinite;margin-right:8px;vertical-align:middle"></span>
+          Connecting to mailbox...
+        </td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- PAGINATION -->
+  <div class="pg-bar">
+    <button class="pgb" id="pgF" onclick="goPage(1)">&#171;</button>
+    <button class="pgb" id="pgP" onclick="goPage(curPg-1)">&#8249;</button>
+    <span id="pgNums" style="display:flex;gap:4px"></span>
+    <button class="pgb" id="pgN" onclick="goPage(curPg+1)">&#8250;</button>
+    <button class="pgb" id="pgL" onclick="goPage(totPg)">&#187;</button>
+    <select class="fsel" id="pgSz" onchange="changePgSz()" style="margin-left:7px">
+      <option value="25">25/page</option><option value="50" selected>50/page</option>
+      <option value="100">100/page</option><option value="200">200/page</option>
+    </select>
+    <div class="pg-inf" id="pgInf">&mdash;</div>
+  </div>
+</div>
+</div>
+
+<!-- DETAIL PANEL -->
+<div class="panel" id="detPanel">
+  <div class="pn-hd">
+    <div>
+      <div style="font-family:var(--mono);font-size:13px;color:var(--blue);font-weight:500;margin-bottom:3px" id="pnId"></div>
+      <div style="font-size:14px;font-weight:600;color:var(--t0);line-height:1.3" id="pnTitle"></div>
+    </div>
+    <div class="pn-x" onclick="closePanel()">&#10005;</div>
+  </div>
+  <div class="pn-body" id="pnBody"></div>
+</div>
+
+<!-- NEW CASE MODAL -->
+<div class="modal-bg" id="modalNew">
+  <div class="modal">
+    <div class="modal-h">+ New Case</div>
+    <div class="modal-s">Manually create a fraud case. Classification engine will score it automatically.</div>
+    <div class="fg"><label class="fl">Case Title</label><input class="fi" type="text" id="nTitle" placeholder="Brief description"></div>
+    <div class="frow">
+      <div class="fg"><label class="fl">Fraud Type</label>
+        <select class="fi" id="nType"><option>SIM Swap Fraud</option><option>Phishing</option><option>Identity Theft</option><option>Unauthorized Transfer</option><option>Card Fraud</option><option>Insider Threat</option><option>Money Laundering</option><option>Investment Scam</option><option>Account Takeover</option><option>BEC</option></select>
+      </div>
+      <div class="fg"><label class="fl">Override Priority</label>
+        <select class="fi" id="nPri"><option value="">Auto-score</option><option value="critical">Critical</option><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option></select>
+      </div>
+    </div>
+    <div class="frow">
+      <div class="fg"><label class="fl">Amount (&#8358;)</label><input class="fi" type="number" id="nAmt" placeholder="0"></div>
+      <div class="fg"><label class="fl">Override Status</label>
+        <select class="fi" id="nStat"><option value="">Auto-detect</option><option value="open">Open</option><option value="in-progress">In Progress</option><option value="escalated">Escalated</option></select>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-sec" onclick="closeNewCase()">Cancel</button>
+      <button class="btn-sm" onclick="submitNewCase()">Create Case</button>
+    </div>
+  </div>
+</div>
+
+<!-- POWER BI MODAL -->
+<div class="modal-bg" id="modalPBI">
+  <div class="modal" style="width:550px">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:5px"><span style="font-size:20px">&#128202;</span><div class="modal-h" style="margin-bottom:0">Power BI Export</div></div>
+    <div class="modal-s">Export smart-classified case data to Power BI Desktop. All scored fields included.</div>
+    <div class="pbi-s">
+      <div class="pbi-st">Export Format</div>
+      <div class="ef-grid">
+        <div class="ef-btn sel" id="efCSV" onclick="pickFmt('csv')"><div class="ef-ico">&#128196;</div><div class="ef-nm">CSV</div><div class="ef-ds">Recommended for Power BI</div></div>
+        <div class="ef-btn" id="efJSON" onclick="pickFmt('json')"><div class="ef-ico">{ }</div><div class="ef-nm">JSON</div><div class="ef-ds">API / custom connectors</div></div>
+      </div>
+      <div style="display:flex;gap:7px;flex-wrap:wrap;align-items:center">
+        <select class="fsel" id="expRng"><option value="all">All time</option><option value="7d">Last 7 days</option><option value="30d">Last 30 days</option><option value="90d">Last 90 days</option></select>
+        <select class="fsel" id="expStat"><option value="">All statuses</option><option value="open">Open</option><option value="escalated">Escalated</option><option value="closed">Closed</option></select>
+        <button class="btn-y" onclick="doExport()" style="margin-left:auto">&#8595; Download</button>
+      </div>
+      <div style="margin-top:10px;padding:9px;background:var(--bg-0);border-radius:6px;border:1px solid var(--border)">
+        <div style="font-size:9.5px;color:var(--t2);font-weight:700;text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px">Fields exported</div>
+        <div style="font-family:var(--mono);font-size:10.5px;color:var(--teal);line-height:1.9">case_id &middot; title &middot; fraud_type &middot; priority &middot; risk_score &middot; status &middot; status_source &middot; date &middot; total_amount_ngn &middot; amount_count &middot; email_subject &middot; email_from &middot; sender_domain &middot; is_internal_sender</div>
+      </div>
+    </div>
+    <div class="pbi-s">
+      <div class="pbi-st">&#128200; Live Snapshot</div>
+      <div id="pbiSnap"></div>
+    </div>
+    <div class="modal-foot"><button class="btn-sec" onclick="closePBI()">Close</button></div>
+  </div>
+</div>
+
+<script>
+(function(){
+'use strict';
+
+// ═══════════════════════════════════════════════════════
+// SMART CLASSIFICATION ENGINE
+// ═══════════════════════════════════════════════════════
+
+// ── 1. FRAUD TYPE DETECTION ──────────────────────────
+// Ordered rules — first full match wins. Each rule also
+// carries a base priority weight used in scoring.
+var FRAUD_RULES = [
+  { re:/sim.?swap|sim.?port|number.?port|porting.?fraud/i,     type:'SIM Swap Fraud',         basePri:40 },
+  { re:/bec|business.?email.?comprom|ceo.?fraud|wire.?fraud/i,  type:'BEC / CEO Fraud',        basePri:45 },
+  { re:/unauthori[sz]ed.?transfer|fraudulent.?transfer/i,       type:'Unauthorized Transfer',  basePri:42 },
+  { re:/phish|vish|smish|spoof|fake.?(?:email|site|portal)/i,   type:'Phishing',               basePri:30 },
+  { re:/identity.?theft|id.?fraud|impersonat|fake.?id|forged/i, type:'Identity Theft',         basePri:30 },
+  { re:/atm.?skim|card.?skim|pos.?tamper|skimm/i,              type:'ATM / Card Skimming',    basePri:32 },
+  { re:/card.?not.?present|cnp.?fraud|online.?card/i,           type:'CNP Card Fraud',         basePri:28 },
+  { re:/card.?fraud|stolen.?card|cloned.?card/i,                type:'Card Fraud',             basePri:25 },
+  { re:/insider|staff.?fraud|employee.?fraud|rogue.?staff/i,    type:'Insider Threat',         basePri:45 },
+  { re:/money.?launder|structur|smurfing|layering/i,            type:'Money Laundering',       basePri:22 },
+  { re:/ofac|sanction|sdn.?list|swift.?screen/i,                type:'Sanctions Violation',    basePri:38 },
+  { re:/invest.?scam|ponzi|pyramid|crypto.?scam|forex.?scam/i,  type:'Investment Scam',        basePri:20 },
+  { re:/account.?takeover|ato|unauthorized.?login/i,            type:'Account Takeover',       basePri:28 },
+  { re:/deepfake|synthetic.?identity|biometric.?bypass/i,       type:'Synthetic Identity',     basePri:35 },
+  { re:/ransomware|malware|cyber/i,                              type:'Cyber Fraud',            basePri:33 },
+];
+
+function detectFraudType(text) {
+  for (var i = 0; i < FRAUD_RULES.length; i++) {
+    if (FRAUD_RULES[i].re.test(text)) return FRAUD_RULES[i];
+  }
+  return { type:'Unclassified', basePri:10 };
+}
+
+// ── 2. STATUS DETECTION ──────────────────────────────
+// Status is derived from keyword signals in subject + body,
+// NOT from email.isRead (which only reflects whether someone
+// opened the email, not whether action has been taken).
+//
+// Signal groups are checked in priority order.
+// A case needs signals from a group to be assigned that status.
+var STATUS_RULES = [
+  {
+    status: 'closed',
+    weight: 0,
+    patterns: [
+      /\b(resolved|closed|completed|finalised|finalized|no.?further.?action|case.?closed|concluded|settled|remediated|recovered|refunded|reversed)\b/i,
+      /\b(false.?alarm|not.?fraud|legitimate|cleared|dismissed|withdrawn)\b/i
+    ]
+  },
+  {
+    status: 'escalated',
+    weight: 0,
+    patterns: [
+      /\b(escalat|urgent|immediate|critical.?alert|emergency|refer.?to.?(?:efcc|cbn|police|legal)|cbn.?reportable|str.?filing|law.?enforcement)\b/i,
+      /\b(regulatory.?breach|mandatory.?report|threshold.?breach|high.?value.?alert)\b/i
+    ]
+  },
+  {
+    status: 'in-progress',
+    weight: 0,
+    patterns: [
+      /\b(investigating|under.?review|being.?handled|in.?progress|action.?taken|freeze.?placed|account.?frozen|hold.?placed|monitoring|tracing|traced|blocked|suspended|pending.?verification|follow.?up|following.?up)\b/i,
+      /\b(contacted|notified|informed|reported.?to|flagged.?to|referred.?to|escalated.?to|working.?with)\b/i
+    ]
+  },
+  {
+    status: 'pending',
+    weight: 0,
+    patterns: [
+      /\b(awaiting|pending|please.?(?:advise|confirm|review|investigate|check)|requires.?action|needs.?attention|kindly|request.?you.?to|fyi|for.?your.?information|please.?be.?informed)\b/i
+    ]
+  }
+];
+
+// Default: if no keyword matches → 'open' (genuinely unhandled)
+function detectStatus(text) {
+  for (var i = 0; i < STATUS_RULES.length; i++) {
+    var rule = STATUS_RULES[i];
+    for (var j = 0; j < rule.patterns.length; j++) {
+      if (rule.patterns[j].test(text)) return rule.status;
+    }
+  }
+  return 'open';
+}
+
+// ── 3. PRIORITY SCORING ──────────────────────────────
+// Six weighted signals. Scores are summed (0–100) then
+// mapped to a priority label.
+//
+// Signal weights:
+//   A) Fraud type base score          (0–45 pts)
+//   B) Amount size                    (0–25 pts)
+//   C) Urgency keywords in subject    (0–15 pts)
+//   D) Sender domain trust            (0–8 pts)
+//   E) Volume of victims mentioned    (0–5 pts)
+//   F) Regulatory / reporting signal  (0–7 pts)  [new signal]
+//
+// Total = A + B + C + D + E + F (capped at 100)
+// 75+ → Critical | 55–74 → High | 35–54 → Medium | <35 → Low
+
+function scoreSignals(fraudRule, amounts, subject, body, senderAddr) {
+  var fullText = subject + ' ' + body;
+  var totalAmt = 0;
+  for (var i = 0; i < amounts.length; i++) totalAmt += amounts[i];
+
+  // A) Fraud type base
+  var sigA = fraudRule.basePri || 10;
+
+  // B) Amount — log-scaled so massive amounts push up without dominating
+  var sigB = 0;
+  if (totalAmt >= 100000000)      sigB = 25; // 100M+
+  else if (totalAmt >= 50000000)  sigB = 20; // 50M–100M
+  else if (totalAmt >= 10000000)  sigB = 16; // 10M–50M
+  else if (totalAmt >= 5000000)   sigB = 12; // 5M–10M
+  else if (totalAmt >= 1000000)   sigB = 8;  // 1M–5M
+  else if (totalAmt >= 100000)    sigB = 4;  // 100K–1M
+  else if (totalAmt > 0)          sigB = 2;  // any amount
+
+  // C) Urgency keywords in subject line
+  var sigC = 0;
+  if (/\b(critical|urgent|immediate|emergency|high.?priority)\b/i.test(subject)) sigC = 15;
+  else if (/\b(alert|warning|attention|asap|important)\b/i.test(subject)) sigC = 8;
+  else if (/\b(re:|fw:|fwd:)/i.test(subject)) sigC = 3; // reply/forward = being handled
+
+  // D) Sender domain trust score
+  // Internal bank domains → highest trust (genuine reports)
+  // Common public domains → moderate
+  // Unknown / generic → lower trust signal (could be noise)
+  var sigD = 0;
+  var domain = (senderAddr || '').split('@')[1] || '';
+  if (/fidelitybank\.(com|ng)/i.test(domain)) sigD = 8;       // internal
+  else if (/\.(bank|finance|gov|ng)\b/i.test(domain)) sigD = 6; // regulated
+  else if (/gmail|yahoo|hotmail|outlook\.com/i.test(domain)) sigD = 3; // public email
+  else if (domain) sigD = 5;                                    // other corporate
+
+  // E) Victim / account volume
+  var sigE = 0;
+  var volMatch = fullText.match(/(\d[\d,]*)\s*(customer|account|card|victim|user|client)/i);
+  if (volMatch) {
+    var vol = parseInt(volMatch[1].replace(/,/g,''));
+    if (vol >= 100) sigE = 5;
+    else if (vol >= 20) sigE = 4;
+    else if (vol >= 5)  sigE = 3;
+    else                sigE = 1;
+  }
+
+  // F) Regulatory / mandatory reporting trigger
+  var sigF = 0;
+  if (/\b(efcc|cbn|nfiu|str|sar|mandatory.?report|law.?enforcement|police.?report|ofac|sanction)\b/i.test(fullText)) sigF = 7;
+  else if (/\b(compliance|aml|kyc|report.?required|file.?report)\b/i.test(fullText)) sigF = 4;
+
+  var total = Math.min(100, sigA + sigB + sigC + sigD + sigE + sigF);
+  var label = total >= 75 ? 'critical' : total >= 55 ? 'high' : total >= 35 ? 'medium' : 'low';
+
+  return {
+    score: total,
+    label: label,
+    breakdown: {
+      'Fraud type':      { pts: sigA, max: 45, color: '#4f8ef7' },
+      'Amount size':     { pts: sigB, max: 25, color: '#2dd4bf' },
+      'Urgency signal':  { pts: sigC, max: 15, color: '#f97316' },
+      'Sender trust':    { pts: sigD, max: 8,  color: '#22c55e' },
+      'Victim count':    { pts: sigE, max: 5,  color: '#a78bfa' },
+      'Regulatory flag': { pts: sigF, max: 7,  color: '#ef4444' }
+    }
+  };
+}
+
+// ── 4. AMOUNT EXTRACTION ─────────────────────────────
+// Extracts ALL Naira amounts in text.
+// Handles:
+//   ₦2,500,000  N3.5M  NGN 120,000  2500000 naira
+//   "five million naira" → word-form amounts
+// Returns array of individual amounts + total sum.
+
+var WORD_AMOUNTS = [
+  [/\bone\s+(?:hundred\s+)?(?:million)/i, 100000000],
+  [/\bfifty\s+million/i, 50000000],
+  [/\btwenty.?five?\s+million/i, 25000000],
+  [/\bten\s+million/i, 10000000],
+  [/\bfive\s+million/i, 5000000],
+  [/\bthree\s+million/i, 3000000],
+  [/\btwo\s+million/i, 2000000],
+  [/\bone\s+million/i, 1000000],
+  [/\bfive\s+hundred\s+thousand/i, 500000],
+  [/\bone\s+hundred\s+thousand/i, 100000],
+  [/\bfifty\s+thousand/i, 50000],
+];
+
+function extractAmounts(text) {
+  var found = [];
+
+  // Numeric with ₦ / N / NGN prefix, M/K suffix support
+  var re1 = /(?:&#8358;|NGN|N)\s?([\d,]+(?:\.\d{1,2})?)\s*([MKB]?)/gi;
+  var m;
+  while ((m = re1.exec(text)) !== null) {
+    var n = parseFloat(m[1].replace(/,/g,''));
+    if (m[2]==='M'||m[2]==='m') n *= 1000000;
+    else if (m[2]==='K'||m[2]==='k') n *= 1000;
+    else if (m[2]==='B'||m[2]==='b') n *= 1000000000;
+    if (n > 0) found.push(Math.round(n));
+  }
+
+  // Numeric followed by 'naira'
+  var re2 = /([\d,]+(?:\.\d{1,2})?)\s*naira/gi;
+  while ((m = re2.exec(text)) !== null) {
+    var n2 = parseFloat(m[1].replace(/,/g,''));
+    if (n2 > 0) found.push(Math.round(n2));
+  }
+
+  // Word-form amounts
+  for (var i = 0; i < WORD_AMOUNTS.length; i++) {
+    if (WORD_AMOUNTS[i][0].test(text)) found.push(WORD_AMOUNTS[i][1]);
+  }
+
+  // Deduplicate and sort
+  found = found.filter(function(v,i,a){ return a.indexOf(v)===i; });
+  found.sort(function(a,b){return b-a;});
+  return found;
+}
+
+// ── 5. SENDER TRUST ──────────────────────────────────
+function isInternalSender(addr) {
+  return /fidelitybank\.(com|ng)/i.test(addr || '');
+}
+function senderDomain(addr) {
+  return (addr||'').split('@')[1] || 'unknown';
+}
+
+// ── 6. FULL CLASSIFICATION PIPELINE ──────────────────
+// Takes a raw Graph API message object and returns a case.
+var caseSeq = 0;
+function classifyEmail(email) {
+  caseSeq++;
+  var subject = email.subject || '';
+  var body = email.body || email.bodyPreview || '';
+  var from = (email.from && email.from.emailAddress && email.from.emailAddress.address) || '';
+  var fullText = subject + ' ' + body;
+
+  var fraudRule = detectFraudType(fullText);
+  var amounts   = extractAmounts(fullText);
+  var totalAmt  = amounts.reduce(function(s,v){return s+v;},0);
+  var scored    = scoreSignals(fraudRule, amounts, subject, body, from);
+  var status    = detectStatus(fullText);
+  var yr        = new Date(email.receivedDateTime || Date.now()).getFullYear();
+  var dt        = new Date(email.receivedDateTime || Date.now());
+
+  return {
+    id:           'FRD-' + yr + '-' + String(caseSeq).padStart(3,'0'),
+    title:        subject || 'Fraud Report #' + caseSeq,
+    fraudType:    fraudRule.type,
+    priority:     scored.label,
+    score:        scored.score,
+    scoreBreak:   scored.breakdown,
+    status:       status,
+    statusSource: 'keyword', // distinguishes auto-detect from manual override
+    date:         dt.toLocaleString('en-GB',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}),
+    rawDate:      dt,
+    amounts:      amounts,
+    amount:       totalAmt,
+    emailSubject: subject,
+    emailBody:    body,
+    emailFrom:    from,
+    senderDomain: senderDomain(from),
+    isInternal:   isInternalSender(from),
+    graphId:      email.id || ''
+  };
+}
+
+// ═══════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════
+var allCases = [], filtered = [], activeTab = 'all';
+var sortF = 'date', sortD = -1, selId = null;
+var curPg = 1, pgSz = 50, totPg = 1;
+var expFmt = 'csv', caseManualNum = 0;
+var mbAddr = '', tokenVal = null;
+
+// ── CLOCK ────────────────────────────────────────────
+function tick(){
+  var n=new Date();
+  document.getElementById('clockEl').textContent=
+    n.toLocaleDateString('en-GB',{weekday:'short',day:'2-digit',month:'short',year:'numeric'})+' '+
+    n.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+}
+setInterval(tick,1000); tick();
+
+// ═══════════════════════════════════════════════════════
+// AUTH
+// ═══════════════════════════════════════════════════════
+function doConnect() {
+  var mb  = document.getElementById('inpMb').value.trim();
+  var tid = document.getElementById('inpTid').value.trim();
+  var cid = document.getElementById('inpCid').value.trim();
+  if (!mb)       { authErr('Please enter the shared mailbox address.'); return; }
+  if (!tid||!cid){ authErr('Please enter Tenant ID and Client ID.'); return; }
+  var btn = document.getElementById('authBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span style="display:inline-block;width:13px;height:13px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite"></span>&nbsp; Connecting...';
+  mbAddr = mb;
+  var v = makeVerifier();
+  makeChallenge(v).then(function(ch){
+    try{sessionStorage.setItem('fd_v',v);sessionStorage.setItem('fd_t',tid);sessionStorage.setItem('fd_c',cid);sessionStorage.setItem('fd_m',mb);}catch(e){}
+    var base = 'https://login.microsoftonline.com/'+tid+'/oauth2/v2.0/authorize';
+    var q = 'client_id='+encodeURIComponent(cid)
+      +'&response_type=code'
+      +'&redirect_uri='+encodeURIComponent(loc0())
+      +'&response_mode=query'
+      +'&scope='+encodeURIComponent('https://graph.microsoft.com/Mail.Read https://graph.microsoft.com/Mail.ReadWrite https://graph.microsoft.com/User.Read offline_access')
+      +'&code_challenge='+ch
+      +'&code_challenge_method=S256'
+      +'&state=fd_v2';
+    window.location.href = base+'?'+q;
+  });
+}
+
+function authErr(msg){
+  var el=document.getElementById('authErr');
+  el.textContent=msg; el.style.display='block';
+  var btn=document.getElementById('authBtn');
+  btn.disabled=false;
+  btn.innerHTML='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="2" y="2" width="9" height="9" rx="1.5"/><rect x="13" y="2" width="9" height="9" rx="1.5"/><rect x="2" y="13" width="9" height="9" rx="1.5"/><rect x="13" y="13" width="9" height="9" rx="1.5"/></svg> Connect via Microsoft OAuth';
+}
+
+function loc0(){ return window.location.href.split('?')[0]; }
+
+function makeVerifier(){
+  var a=new Uint8Array(32); crypto.getRandomValues(a);
+  return btoa(String.fromCharCode.apply(null,a)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+}
+function makeChallenge(v){
+  return crypto.subtle.digest('SHA-256',new TextEncoder().encode(v)).then(function(b){
+    return btoa(String.fromCharCode.apply(null,new Uint8Array(b))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+  });
+}
+
+function handleCallback(){
+  var p=new URLSearchParams(window.location.search);
+  if(p.get('state')!=='fd_v2') return false;
+  var code=p.get('code'); if(!code) return false;
+  var tid,cid,v,mb;
+  try{tid=sessionStorage.getItem('fd_t');cid=sessionStorage.getItem('fd_c');v=sessionStorage.getItem('fd_v');mb=sessionStorage.getItem('fd_m');}catch(e){}
+  mbAddr=mb||'';
+  var xhr=new XMLHttpRequest();
+  xhr.open('POST','https://login.microsoftonline.com/'+tid+'/oauth2/v2.0/token',true);
+  xhr.setRequestHeader('Content-Type','application/x-www-form-urlencoded');
+  xhr.onload=function(){
+    if(xhr.status===200){
+      var d=JSON.parse(xhr.responseText);
+      tokenVal=d.access_token;
+      try{sessionStorage.setItem('fd_tok',tokenVal);}catch(e){}
+      window.history.replaceState({},document.title,window.location.pathname);
+      document.getElementById('authWrap').classList.add('gone');
+      setConnected();
+      fetchAllEmails();
+    } else { authErr('Token exchange failed. Please retry.'); }
+  };
+  xhr.onerror=function(){authErr('Network error during authentication.');};
+  xhr.send('client_id='+encodeURIComponent(cid)+'&grant_type=authorization_code&code='+encodeURIComponent(code)+'&redirect_uri='+encodeURIComponent(loc0())+'&code_verifier='+encodeURIComponent(v));
+  return true;
+}
+
+function setConnected(){
+  document.getElementById('connBadge').style.display='inline-flex';
+  document.getElementById('mbPill').style.display='inline-block';
+  document.getElementById('mbPill').textContent=mbAddr;
+}
+
+// ═══════════════════════════════════════════════════════
+// GRAPH API — Paginated full-body fetch
+// ═══════════════════════════════════════════════════════
+// For each page of messages, we fetch the FULL body (not
+// just bodyPreview) so the classification engine has
+// complete text to work with. We use $select to include
+// body.content alongside metadata.
+
+function fetchAllEmails(){
+  showLoading('Fetching emails from '+mbAddr+'...');
+  allCases=[];
+  var maxPages=10, pageNum=0;
+  // Full body requires body field — Graph returns body.content when requested
+  var baseUrl='https://graph.microsoft.com/v1.0/users/'+encodeURIComponent(mbAddr)+
+    '/mailFolders/Inbox/messages?$top=999&$orderby=receivedDateTime%20desc'+
+    '&$select=id,subject,from,body,bodyPreview,receivedDateTime,isRead,importance,hasAttachments';
+
+  function fetchPage(url){
+    pageNum++;
+    if(pageNum>maxPages){ finishFetch(); return; }
+    var xhr=new XMLHttpRequest();
+    xhr.open('GET',url,true);
+    xhr.setRequestHeader('Authorization','Bearer '+tokenVal);
+    // Prefer plain text body to avoid HTML noise in classification
+    xhr.setRequestHeader('Prefer','outlook.body-content-type="text"');
+    xhr.onload=function(){
+      if(xhr.status===200){
+        var data=JSON.parse(xhr.responseText);
+        var msgs=data.value||[];
+        for(var i=0;i<msgs.length;i++){
+          // Use body.content if available; fall back to bodyPreview
+          var bodyContent=(msgs[i].body&&msgs[i].body.content)||msgs[i].bodyPreview||'';
+          msgs[i].body=bodyContent;
+          allCases.push(classifyEmail(msgs[i]));
+        }
+        showLoading('Classified '+allCases.length+' cases...');
+        var nxt=data['@odata.nextLink'];
+        if(nxt){ setTimeout(function(){ fetchPage(nxt); },300); }
+        else { finishFetch(); }
+      } else if(xhr.status===401){
+        authErr('Session expired. Please reconnect.');
+      } else { finishFetch(); }
+    };
+    xhr.onerror=function(){ finishFetch(); };
+    xhr.send();
+  }
+  fetchPage(baseUrl);
+}
+
+function showLoading(msg){
+  document.getElementById('tBody').innerHTML=
+    '<tr><td colspan="8" style="text-align:center;padding:48px;color:var(--t2)">'+
+    '<span style="display:inline-block;width:13px;height:13px;border:2px solid var(--border-b);border-top-color:var(--blue);border-radius:50%;animation:spin .7s linear infinite;margin-right:8px;vertical-align:middle"></span>'+
+    msg+'</td></tr>';
+}
+
+function finishFetch(){
+  setConnected();
+  renderAll();
+}
+
+function doSync(){
+  var ico=document.getElementById('syncIco');
+  ico.style.animation='spin .7s linear infinite';
+  if(tokenVal){ allCases=[]; caseSeq=0; fetchAllEmails(); }
+  setTimeout(function(){ ico.style.animation=''; },1500);
+}
+
+// ═══════════════════════════════════════════════════════
+// DEMO MODE — cases pre-classified with smart engine
+// ═══════════════════════════════════════════════════════
+var DEMO_EMAILS = [
+  { id:'e001', subject:'CRITICAL: SIM Swap Detected - Account xxxx7823', from:{emailAddress:{address:'mobile.alerts@fidelitybank.com'}}, receivedDateTime:'2026-02-26T09:14:00Z', body:'Customer Adunola Eze reports SIM ported without consent at 08:45. Three OTP-authenticated transfers of &#8358;2,500,000, &#8358;3,000,000 and &#8358;2,950,000 made to unknown beneficiaries. Requires immediate action.', isRead:false },
+  { id:'e002', subject:'URGENT: CEO Fraud - Approved Wire &#8358;125,000,000 instruction', from:{emailAddress:{address:'treasury@fidelitybank.com'}}, receivedDateTime:'2026-02-26T08:51:00Z', body:'Treasury manager flags email purportedly from CEO requesting urgent &#8358;125,000,000 wire to new vendor. Email headers show external origin. BEC suspected. Wire held pending investigation. Please escalate to IT Security and Legal.', isRead:false },
+  { id:'e003', subject:'RE: Phishing site live — 340 customers affected fidelitybank-secure.com', from:{emailAddress:{address:'it.security@fidelitybank.com'}}, receivedDateTime:'2026-02-26T07:30:00Z', body:'IT Security: Active phishing portal at fidelitybank-secure-login.com harvesting credentials. Approximately 340 customers credentials potentially captured. Takedown request submitted. Investigating affected accounts. Action being taken.', isRead:true },
+  { id:'e004', subject:'ATM Skimming Alert — 6 terminals compromised Lekki Phase 1', from:{emailAddress:{address:'atm.operations@fidelitybank.com'}}, receivedDateTime:'2026-02-25T22:18:00Z', body:'Physical inspection reveals skimming overlays on 6 ATMs across Lekki Phase 1 and Victoria Island. 89 customer cards confirmed compromised. Unauthorized withdrawals of approximately &#8358;18,750,000 recorded. Cards being blocked. Forensics team engaged.', isRead:true },
+  { id:'e005', subject:'Account Takeover Alert — forged NIN documents VI Branch', from:{emailAddress:{address:'vi.branch@fidelitybank.com'}}, receivedDateTime:'2026-02-25T18:44:00Z', body:'Branch staff intercepted individual with forged NIN documentation and silicone fingerprint overlay attempting to claim account xxxx0934. Three prior unauthorized transfers totalling &#8358;11,200,000 already processed. Customer notified. Case requires escalation.', isRead:false },
+  { id:'e006', subject:'INSIDER THREAT DETECTED — Employee ID 8841 accessed 512 accounts after hours', from:{emailAddress:{address:'it.security@fidelitybank.com'}}, receivedDateTime:'2026-02-25T15:30:00Z', body:'SIEM alert: privileged employee accessed 512 customer accounts between 23:14 and 02:58 from unregistered IP. Data export queries logged. HR and Legal notified. Access revoked. Please refer to EFCC. Do not alert employee until evidence secured.', isRead:false },
+  { id:'e007', subject:'AML Alert — Structuring pattern &#8358;312,000,000 across 18 accounts', from:{emailAddress:{address:'compliance@fidelitybank.com'}}, receivedDateTime:'2026-02-25T12:00:00Z', body:'Transaction monitoring flags 18 linked accounts receiving coordinated cash deposits of &#8358;980,000-&#8358;995,000 daily over 90 days totalling &#8358;312,000,000. Pattern consistent with smurfing/structuring. STR filing mandatory. NFIU notification required. Compliance team investigating.', isRead:true },
+  { id:'e008', subject:'Investment Fraud — 23 customers defrauded &#8358;47,500,000', from:{emailAddress:{address:'customer.care@fidelitybank.com'}}, receivedDateTime:'2026-02-25T09:22:00Z', body:'23 customers report transfers to entity offering 40% monthly crypto investment returns. Individual amounts range from &#8358;500,000 to &#8358;8,000,000. Entity account opened 3 weeks ago; funds immediately withdrawn to five other accounts. Awaiting your review and instructions on how to proceed.', isRead:false },
+  { id:'e009', subject:'CNP Card Fraud — 47 cards compromised, &#8358;9,870,000 in unauthorised transactions', from:{emailAddress:{address:'card.operations@fidelitybank.com'}}, receivedDateTime:'2026-02-24T21:05:00Z', body:'47 Fidelity debit cards used for international card-not-present transactions from IP ranges in Eastern Europe. Transactions range from &#8358;200,000 to &#8358;1,800,000. Cards appear compromised via data breach at e-commerce platform. Cards blocked. Replacement in progress.', isRead:true },
+  { id:'e010', subject:'SIM Swap Cluster — 3 cases Apapa Branch area 48 hours', from:{emailAddress:{address:'fraud.ops@fidelitybank.com'}}, receivedDateTime:'2026-02-24T16:30:00Z', body:'Three SIM swap cases from customers linked to same Apapa telco outlet within 48 hours. Total exposure &#8358;6,750,000. Suspected telco insider facilitating fraudulent ports. Coordinating with MTN fraud team. Please advise on escalation path.', isRead:false },
+  { id:'e011', subject:'Synthetic identity fraud — deepfake biometric bypass KYC 8 accounts', from:{emailAddress:{address:'kyc@fidelitybank.com'}}, receivedDateTime:'2026-02-24T11:15:00Z', body:'KYC audit identifies 8 accounts opened using synthetic identities: real NIN numbers combined with deepfake facial biometrics injected at onboarding. Accounts received aggregate &#8358;2,100,000 before freeze. Biometric vendor notified. CBN notification under review.', isRead:true },
+  { id:'e012', subject:'FW: OFAC Sanctions match — cross-border payment &#8358;85,000,000 held', from:{emailAddress:{address:'trade.finance@fidelitybank.com'}}, receivedDateTime:'2026-02-23T14:00:00Z', body:'SWIFT screening match against OFAC SDN list for cross-border trade finance payment of &#8358;85,000,000 to shipping company with sanctions exposure. Transaction held. CBN and correspondent bank notified. SAR filed. Case resolved pending regulatory confirmation.', isRead:true },
+  { id:'e013', subject:'Phishing SMS campaign — 200 customers received smishing message', from:{emailAddress:{address:'branch.surulere@fidelitybank.com'}}, receivedDateTime:'2026-02-23T10:00:00Z', body:'Multiple customers report SMS messages impersonating Fidelity Bank requesting OTP verification. Links lead to spoofed login page. Approx 200 customers targeted. No confirmed credential theft yet. Monitoring customer accounts. Fyi for awareness. No amounts reported.', isRead:true },
+];
+
+function runDemo(){
+  document.getElementById('authWrap').classList.add('gone');
+  mbAddr='fraud@fidelitybank.com (DEMO)';
+  allCases=[];
+  caseSeq=0;
+  for(var i=0;i<DEMO_EMAILS.length;i++){
+    var e=DEMO_EMAILS[i];
+    // Decode HTML entities for classification
+    var div=document.createElement('div');
+    div.innerHTML=e.body; e.body=div.textContent||div.innerText||e.body;
+    div.innerHTML=e.subject; e.subject=div.textContent||div.innerText||e.subject;
+    allCases.push(classifyEmail(e));
+  }
+  var b=document.getElementById('connBadge');
+  b.style.cssText='background:rgba(167,139,250,.1);border:1px solid rgba(167,139,250,.28);color:#a78bfa;font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;display:inline-flex;align-items:center;gap:5px;letter-spacing:.1px';
+  b.textContent='Demo Mode';
+  document.getElementById('mbPill').style.display='inline-block';
+  document.getElementById('mbPill').textContent=mbAddr;
+  renderAll();
+}
+
+// ═══════════════════════════════════════════════════════
+// RENDER
+// ═══════════════════════════════════════════════════════
+function renderAll(){ updateStats(); buildTypeFilter(); doFilter(); }
+
+function updateStats(){
+  var o=0,p=0,e=0,cl=0,exp=0;
+  for(var i=0;i<allCases.length;i++){
+    var c=allCases[i];
+    if(c.status==='open')o++;
+    else if(c.status==='in-progress')p++;
+    else if(c.status==='escalated')e++;
+    else if(c.status==='closed')cl++;
+    exp+=(c.amount||0);
+  }
+  setV('sTotal',allCases.length);
+  setV('sOpen',o); setV('sProg',p); setV('sEsc',e); setV('sClosed',cl);
+  document.getElementById('sExp').innerHTML='&#8358;'+fmtS(exp);
+  document.getElementById('sTotalN').textContent='\u2191 '+allCases.length+' email cases classified';
+  document.getElementById('sEscN').textContent= e>0?'\u25b2 '+e+' need escalation action':'\u2713 None critical';
+  document.getElementById('tAll').textContent=allCases.length;
+  document.getElementById('tOpen').textContent=o;
+  document.getElementById('tProg').textContent=p;
+  document.getElementById('tEsc').textContent=e;
+  document.getElementById('tClosed').textContent=cl;
+}
+
+function setV(id,v){ document.getElementById(id).textContent=v; }
+
+function fmtS(n){
+  if(n>=1e9) return (n/1e9).toFixed(1)+'B';
+  if(n>=1e6) return (n/1e6).toFixed(1)+'M';
+  if(n>=1e3) return (n/1e3).toFixed(0)+'K';
+  return n.toLocaleString();
+}
+
+function buildTypeFilter(){
+  var sel=document.getElementById('fType'), seen={};
+  sel.innerHTML='<option value="">All Fraud Types</option>';
+  for(var i=0;i<allCases.length;i++){
+    var t=allCases[i].fraudType||'Unclassified';
+    if(!seen[t]){ seen[t]=1; sel.innerHTML+='<option value="'+esc(t)+'">'+esc(t)+'</option>'; }
+  }
+}
+
+function doFilter(){
+  var q=document.getElementById('srchInp').value.toLowerCase();
+  var fs=document.getElementById('fStat').value;
+  var fp=document.getElementById('fPri').value;
+  var ft=document.getElementById('fType').value;
+  filtered=[];
+  for(var i=0;i<allCases.length;i++){
+    var c=allCases[i];
+    if(activeTab!=='all'&&c.status!==activeTab) continue;
+    if(fs&&c.status!==fs) continue;
+    if(fp&&c.priority!==fp) continue;
+    if(ft&&c.fraudType!==ft) continue;
+    if(q&&!((c.id+c.title+c.status+c.fraudType).toLowerCase().includes(q))) continue;
+    filtered.push(c);
+  }
+  sortData(); curPg=1; drawPage();
+}
+
+function sortData(){
+  var pMap={critical:4,high:3,medium:2,low:1};
+  filtered.sort(function(a,b){
+    var va,vb;
+    if(sortF==='date'){va=a.rawDate;vb=b.rawDate;}
+    else if(sortF==='amount'){va=a.amount||0;vb=b.amount||0;}
+    else if(sortF==='priority'){va=pMap[a.priority]||0;vb=pMap[b.priority]||0;}
+    else if(sortF==='score'){va=a.score||0;vb=b.score||0;}
+    else{va=(a[sortF]||'').toString().toLowerCase();vb=(b[sortF]||'').toString().toLowerCase();}
+    if(va<vb) return sortD; if(va>vb) return -sortD; return 0;
+  });
+}
+
+function drawPage(){
+  totPg=Math.max(1,Math.ceil(filtered.length/pgSz));
+  curPg=Math.min(curPg,totPg);
+  var s=(curPg-1)*pgSz, e2=Math.min(s+pgSz,filtered.length);
+  var slice=filtered.slice(s,e2);
+  var tb=document.getElementById('tBody');
+  if(!slice.length){
+    tb.innerHTML='<tr><td colspan="8"><div class="empty"><div style="font-size:36px;opacity:.2;margin-bottom:10px">&#9707;</div>No cases match filters</div></td></tr>';
+    document.getElementById('pgInf').textContent='0 cases';
+    drawPg(); return;
+  }
+  var html='';
+  for(var i=0;i<slice.length;i++){
+    var c=slice[i];
+    var scoreColor=c.score>=75?'var(--red)':c.score>=55?'var(--orange)':c.score>=35?'var(--yellow)':'var(--green)';
+    var fillW=c.score+'%';
+    var amt=c.amount>0?'&#8358;'+c.amount.toLocaleString()+(c.amounts&&c.amounts.length>1?' <span style="font-size:10px;color:var(--t2)">('+c.amounts.length+')</span>':''):'&mdash;';
+    var delay=Math.min(i*0.03,0.35);
+    var selCls=c.id===selId?' sel':'';
+    html+='<tr class="r row-in'+selCls+'" style="animation-delay:'+delay+'s" onclick="openCase(\''+c.id+'\')">'+
+      '<td><span class="cid">'+c.id+'</span></td>'+
+      '<td><div class="ctitle" title="'+esc(c.title)+'">'+esc(c.title)+'</div></td>'+
+      '<td><span class="ftype" title="'+esc(c.fraudType)+'">'+esc(c.fraudType)+'</span></td>'+
+      '<td><span class="pri '+c.priority+'">'+cap(c.priority)+'</span></td>'+
+      '<td><div class="score-bar"><span class="score-num" style="color:'+scoreColor+'">'+c.score+'</span><div class="score-track"><div class="score-fill" style="width:'+fillW+';background:'+scoreColor+'"></div></div></div></td>'+
+      '<td><span class="sb '+c.status+'">'+fmtSt(c.status)+'</span></td>'+
+      '<td><span class="dc">'+c.date+'</span></td>'+
+      '<td><span class="amt">'+amt+'</span></td>'+
+    '</tr>';
+  }
+  tb.innerHTML=html;
+  document.getElementById('pgInf').textContent=(s+1)+'\u2013'+e2+' of '+filtered.length.toLocaleString()+' cases';
+  drawPg();
+}
+
+function drawPg(){
+  var lo=Math.max(1,curPg-2), hi=Math.min(totPg,lo+4);
+  if(hi-lo<4) lo=Math.max(1,hi-4);
+  var pg=document.getElementById('pgNums'); pg.innerHTML='';
+  for(var i=lo;i<=hi;i++){
+    var b=document.createElement('button');
+    b.className='pgb'+(i===curPg?' on':'');
+    b.textContent=i;
+    (function(pp){b.onclick=function(){goPage(pp);};})(i);
+    pg.appendChild(b);
+  }
+  document.getElementById('pgF').disabled=curPg<=1;
+  document.getElementById('pgP').disabled=curPg<=1;
+  document.getElementById('pgN').disabled=curPg>=totPg;
+  document.getElementById('pgL').disabled=curPg>=totPg;
+}
+
+function goPage(p){ curPg=Math.max(1,Math.min(p,totPg)); drawPage(); }
+function changePgSz(){ pgSz=parseInt(document.getElementById('pgSz').value); curPg=1; drawPage(); }
+
+function doSort(f){
+  // Update header classes
+  document.querySelectorAll('th').forEach(function(th){ th.classList.remove('sort-asc','sort-desc'); });
+  var ths=document.querySelectorAll('thead th');
+  var cols=['id','title','fraudType','priority','score','status','date','amount'];
+  var idx=cols.indexOf(f);
+  if(idx>=0){
+    if(sortF===f) sortD*=-1; else {sortF=f;sortD=-1;}
+    ths[idx].classList.add(sortD===-1?'sort-desc':'sort-asc');
+  }
+  sortData(); drawPage();
+}
+
+// ═══════════════════════════════════════════════════════
+// CASE DETAIL PANEL
+// ═══════════════════════════════════════════════════════
+var AI_NOTES = {
+  'SIM Swap Fraud':      'SIM swap confirmed. Attacker social-engineered the mobile operator to port the victim\'s number, diverting all OTP traffic. Recommended actions: immediate account freeze, reverse unauthorised transfers where possible, file complaint with telco fraud team, update customer contact details via out-of-band verification.',
+  'BEC / CEO Fraud':     'Business Email Compromise. Attacker spoofed an executive email address to authorise a fraudulent wire. Recommended: recall transaction via SWIFT gpi within 24h window, forensic review of email headers, staff awareness brief, CBN notification if &#8358;50M+ threshold met.',
+  'Unauthorized Transfer':'Unauthorised fund movement detected. Source unclear — possible credential compromise, insider access or system exploit. Recommended: immediate transaction recall, account freeze, access log forensics, notify affected customer via out-of-band channel.',
+  'Phishing':            'Active phishing campaign harvesting customer credentials. Recommended: takedown request to registrar and hosting provider, force password reset on affected accounts, audit accounts for unauthorised access sessions, publish customer advisory via SMS/email.',
+  'Identity Theft':      'Identity fraud indicators. Customer documentation likely forged or stolen. Recommended: enhanced KYC re-verification, biometric confirmation, apply fraud marker, notify NIMC if NIN is involved.',
+  'ATM / Card Skimming': 'Physical skimming confirmed. Recommended: block all affected cards, arrange immediate replacements, forensic sweep of flagged terminals, customer notification, widen ATM inspection to nearby network.',
+  'CNP Card Fraud':      'Card-not-present fraud from international IP ranges. Likely data breach at third-party merchant. Recommended: block affected cards, issue replacements, notify card schemes (Visa/Mastercard), review 3DS authentication logs.',
+  'Card Fraud':          'Card compromise detected. Recommended: block and replace affected cards, notify customers, review recent transaction history for full scope.',
+  'Insider Threat':      'Privileged access outside authorised scope. Recommended: immediate access revocation, preserve all logs for forensics, HR and Legal engagement, CCTV review of physical access, EFCC referral. Do not alert employee until evidence secured.',
+  'Money Laundering':    'Structuring/layering pattern consistent with smurfing. STR filing mandatory under SCUML/EFCC Act within 24 hours. Recommended: freeze accounts, file STR, preserve transaction records, do not tip off account holders.',
+  'Sanctions Violation': 'OFAC/sanctions match detected. Mandatory regulatory reporting required. Recommended: hold transaction, notify CBN and correspondent bank, file SAR, preserve SWIFT message trail, seek legal guidance.',
+  'Investment Scam':     'Advance-fee or crypto investment fraud. Recommended: freeze beneficiary account, attempt reversal, notify all affected customers, compile evidence for EFCC referral, issue public advisory.',
+  'Account Takeover':    'Account takeover indicators. Recommended: immediate re-authentication of account holder, review all recent changes and access logs, apply temporary access restriction, notify customer via alternate channel.',
+  'Synthetic Identity':  'Deepfake biometric bypass at onboarding. Recommended: suspend all flagged accounts, notify NIMC for NIN validation, brief biometric vendor on bypass vector, submit CBN incident report.',
+  'Cyber Fraud':         'Cyber-enabled fraud indicators. Recommended: preserve all system logs, engage IT security team, isolate affected systems if malware suspected, notify relevant cyber incident response team.',
+  'Unclassified':        'Insufficient keyword signals to auto-classify. Manual review required. Check full email body for fraud indicators and assign appropriate fraud type and priority.',
+};
+
+function openCase(id){
+  selId=id;
+  var c=null;
+  for(var i=0;i<allCases.length;i++){if(allCases[i].id===id){c=allCases[i];break;}}
+  if(!c) return;
+  document.getElementById('pnId').textContent=c.id;
+  document.getElementById('pnTitle').textContent=c.title;
+
+  var scColor=c.score>=75?'var(--red)':c.score>=55?'var(--orange)':c.score>=35?'var(--yellow)':'var(--green)';
+  var scBorder=c.score>=75?'var(--red)':c.score>=55?'var(--orange)':c.score>=35?'var(--yellow)':'var(--green)';
+
+  // Build score breakdown rows
+  var bkHtml='';
+  var bk=c.scoreBreak||{};
+  var bkKeys=Object.keys(bk);
+  for(var k=0;k<bkKeys.length;k++){
+    var key=bkKeys[k], sig=bk[key];
+    var barW=sig.max>0?Math.round((sig.pts/sig.max)*100):0;
+    bkHtml+='<div class="score-row">'+
+      '<span class="score-key"><span class="score-dot" style="background:'+sig.color+'"></span>'+key+'</span>'+
+      '<span style="display:flex;align-items:center;gap:8px">'+
+        '<div style="width:70px;height:3px;background:var(--bg-4);border-radius:2px;overflow:hidden"><div style="width:'+barW+'%;height:100%;background:'+sig.color+';border-radius:2px"></div></div>'+
+        '<span class="score-pts" style="color:'+sig.color+'">'+sig.pts+'</span><span class="score-max">/'+sig.max+'</span>'+
+      '</span></div>';
+  }
+
+  // Build amounts breakdown
+  var amtHtml='';
+  if(c.amounts&&c.amounts.length>0){
+    for(var a=0;a<c.amounts.length;a++){
+      amtHtml+='<tr><td>Amount '+(a+1)+'</td><td>&#8358;'+c.amounts[a].toLocaleString()+'</td></tr>';
+    }
+    if(c.amounts.length>1){
+      amtHtml+='<tr class="amt-total"><td><strong>Total</strong></td><td><strong>&#8358;'+c.amount.toLocaleString()+'</strong></td></tr>';
+    }
+  } else {
+    amtHtml='<tr><td colspan="2" style="color:var(--t2);font-size:11px">No amounts detected in email text</td></tr>';
+  }
+
+  var ai=(AI_NOTES[c.fraudType]||'Manual review required. No auto-classification note available for this fraud type.')+(c.amount>0?' Total detected exposure: &#8358;'+c.amount.toLocaleString()+'.':'');
+  var statusSrc=c.statusSource==='manual'?'Manually set':'Keyword auto-detection';
+
+  document.getElementById('pnBody').innerHTML=
+  // Case details grid
+  '<div class="ds"><div class="ds-t">Case Details</div>'+
+  '<div class="dg3">'+
+    '<div class="df"><div class="fl2">Priority</div><div class="fv"><span class="pri '+c.priority+'" style="font-size:11px">'+cap(c.priority)+'</span></div></div>'+
+    '<div class="df"><div class="fl2">Status</div><div class="fv"><span class="sb '+c.status+'" style="font-size:11px">'+fmtSt(c.status)+'</span></div></div>'+
+    '<div class="df"><div class="fl2">Sender</div><div class="fv" style="font-size:11.5px;font-family:var(--mono)">'+esc(c.senderDomain)+'</div></div>'+
+  '</div>'+
+  '<div style="margin-top:8px" class="dg2">'+
+    '<div class="df"><div class="fl2">Fraud Type</div><div class="fv" style="font-size:12.5px">'+esc(c.fraudType)+'</div></div>'+
+    '<div class="df"><div class="fl2">Status Source</div><div class="fv" style="font-size:12px;color:var(--t1)">'+statusSrc+'</div></div>'+
+    '<div class="df" style="margin-top:8px"><div class="fl2">Email Date</div><div class="fv mono">'+c.date+'</div></div>'+
+    '<div class="df" style="margin-top:8px"><div class="fl2">Internal Sender</div><div class="fv" style="font-size:12px;color:'+(c.isInternal?'var(--green)':'var(--t1)')+'">'+  (c.isInternal?'&#10003; Yes (trusted)':'&#10007; External')+'</div></div>'+
+  '</div></div>'+
+
+  // Risk score breakdown
+  '<div class="ds"><div class="ds-t">Risk Score Breakdown</div>'+
+  '<div class="score-card">'+
+    '<div class="score-big">'+
+      '<div class="score-circle" style="color:'+scColor+';border-color:'+scBorder+'">'+c.score+'</div>'+
+      '<div>'+
+        '<div style="font-size:14px;font-weight:700;color:var(--t0)">'+cap(c.priority)+' Risk</div>'+
+        '<div style="font-size:11.5px;color:var(--t1);margin-top:3px">Score '+c.score+'/100 &mdash; 6 signals evaluated</div>'+
+        '<div style="font-size:10.5px;color:var(--t2);margin-top:2px">'+
+          (c.score>=75?'Immediate action required':c.score>=55?'High-priority review needed':c.score>=35?'Routine investigation':'Low-priority, monitor')+
+        '</div>'+
+      '</div>'+
+    '</div>'+
+    bkHtml+
+  '</div></div>'+
+
+  // Amount extraction
+  '<div class="ds"><div class="ds-t">Amount Extraction</div>'+
+  '<div style="background:var(--bg-3);border:1px solid var(--border);border-radius:8px;padding:12px">'+
+    '<table class="amt-table">'+amtHtml+'</table>'+
+  '</div></div>'+
+
+  // AI recommendation
+  '<div class="ds"><div class="ds-t">AI Recommendation</div>'+
+  '<div class="ai-box"><div class="ai-lbl">&#11041; FraudDesq Intelligence</div>'+
+  '<div class="ai-txt">'+ai+'</div></div></div>'+
+
+  // Source email
+  '<div class="ds"><div class="ds-t">Source Email</div>'+
+  '<div class="email-box">'+
+    '<div class="email-from">From: '+esc(c.emailFrom||'Unknown')+' &nbsp;<span style="font-size:10px;background:var(--bg-4);border:1px solid var(--border);padding:1px 5px;border-radius:3px;color:var(--t2)">'+esc(c.senderDomain)+'</span></div>'+
+    '<div class="email-subj">'+esc(c.emailSubject||c.title)+'</div>'+
+    '<div class="email-body">'+esc((c.emailBody||'').slice(0,380))+'</div>'+
+  '</div></div>'+
+
+  // Timeline
+  '<div class="ds"><div class="ds-t">Activity Timeline</div>'+
+  '<div class="tl-item"><div class="tl-dot b"></div><div><div class="tl-act">Email ingested via Microsoft Graph API (full body)</div><div class="tl-meta">'+c.date+' &middot; Graph API</div></div></div>'+
+  '<div class="tl-item"><div class="tl-dot b"></div><div><div class="tl-act">Fraud type classified: '+esc(c.fraudType)+'</div><div class="tl-meta">'+c.date+' &middot; Classification Engine</div></div></div>'+
+  '<div class="tl-item"><div class="tl-dot b"></div><div><div class="tl-act">Priority scored: '+cap(c.priority)+' ('+c.score+'/100 across 6 signals)</div><div class="tl-meta">'+c.date+' &middot; Scoring Engine</div></div></div>'+
+  '<div class="tl-item"><div class="tl-dot b"></div><div><div class="tl-act">Status detected: '+fmtSt(c.status)+' (source: '+statusSrc+')</div><div class="tl-meta">'+c.date+' &middot; Status Engine</div></div></div>'+
+  '<div class="tl-item"><div class="tl-dot b"></div><div><div class="tl-act">Exposure extracted: '+(c.amounts&&c.amounts.length>0?c.amounts.length+' amount'+(c.amounts.length>1?'s':'')+' totalling &#8358;'+c.amount.toLocaleString():'No amounts detected')+'</div><div class="tl-meta">'+c.date+' &middot; Amount Engine</div></div></div>'+
+  '</div>'+
+
+  // Action buttons
+  '<div class="pn-btns">'+
+    '<button class="pb-prog" onclick="setStatus(\''+id+'\',\'in-progress\')">In Progress</button>'+
+    '<button class="pb-esc" onclick="setStatus(\''+id+'\',\'escalated\')">Escalate</button>'+
+    '<button class="pb-cls" onclick="setStatus(\''+id+'\',\'closed\')">Close Case</button>'+
+  '</div>';
+
+  document.getElementById('detPanel').classList.add('open');
+  drawPage();
+}
+
+function closePanel(){ selId=null; document.getElementById('detPanel').classList.remove('open'); drawPage(); }
+
+function setStatus(id,ns){
+  for(var i=0;i<allCases.length;i++){
+    if(allCases[i].id===id){ allCases[i].status=ns; allCases[i].statusSource='manual'; break; }
+  }
+  updateStats(); openCase(id);
+}
+
+// ═══════════════════════════════════════════════════════
+// NEW CASE
+// ═══════════════════════════════════════════════════════
+function openNewCase(){ document.getElementById('modalNew').classList.add('show'); }
+function closeNewCase(){ document.getElementById('modalNew').classList.remove('show'); }
+
+function submitNewCase(){
+  caseManualNum++;
+  var yr=new Date().getFullYear();
+  var nid='FRD-'+yr+'-M'+String(caseManualNum).padStart(3,'0');
+  var title=document.getElementById('nTitle').value||'Manual Case';
+  var ftype=document.getElementById('nType').value;
+  var overPri=document.getElementById('nPri').value;
+  var overStat=document.getElementById('nStat').value;
+  var amt=parseInt(document.getElementById('nAmt').value)||0;
+
+  var fraudRule=detectFraudType(title+' '+ftype);
+  var amounts=amt>0?[amt]:[];
+  var scored=scoreSignals(fraudRule,amounts,title,'',mbAddr);
+
+  var nc={
+    id:nid, title:title, fraudType:ftype,
+    priority: overPri||scored.label, score:scored.score, scoreBreak:scored.breakdown,
+    status: overStat||'open', statusSource: overPri?'manual':'auto',
+    date: new Date().toLocaleString('en-GB',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}),
+    rawDate: new Date(),
+    amounts: amounts, amount: amt,
+    emailSubject: title, emailBody: 'Manually created case.', emailFrom: 'Manual Entry',
+    senderDomain: 'manual', isInternal: false
+  };
+  allCases.unshift(nc);
+  closeNewCase(); renderAll(); openCase(nid);
+}
+
+// ═══════════════════════════════════════════════════════
+// POWER BI
+// ═══════════════════════════════════════════════════════
+function openPBI(){
+  document.getElementById('modalPBI').classList.add('show');
+  var el=document.getElementById('pbiSnap');
+  var byType={}, totExp=0, crit=0, highScore=0, avgScore=0;
+  for(var i=0;i<allCases.length;i++){
+    var c=allCases[i];
+    var t=c.fraudType||'Unknown';
+    byType[t]=(byType[t]||0)+1;
+    totExp+=(c.amount||0);
+    if(c.priority==='critical') crit++;
+    if((c.score||0)>highScore) highScore=c.score;
+    avgScore+=c.score||0;
+  }
+  avgScore=allCases.length>0?Math.round(avgScore/allCases.length):0;
+  var top=null, topN=0;
+  for(var k in byType){if(byType[k]>topN){topN=byType[k];top=k;}}
+  el.innerHTML=
+    '<div class="pbi-row"><span class="pbi-rl">Total Cases</span><span class="pbi-rv">'+allCases.length.toLocaleString()+'</span></div>'+
+    '<div class="pbi-row"><span class="pbi-rl">Total Exposure</span><span class="pbi-rv">&#8358;'+totExp.toLocaleString()+'</span></div>'+
+    '<div class="pbi-row"><span class="pbi-rl">Critical Cases</span><span class="pbi-rv" style="color:var(--red)">'+crit+'</span></div>'+
+    '<div class="pbi-row"><span class="pbi-rl">Avg Risk Score</span><span class="pbi-rv">'+avgScore+' / 100</span></div>'+
+    '<div class="pbi-row"><span class="pbi-rl">Highest Score</span><span class="pbi-rv">'+highScore+' / 100</span></div>'+
+    '<div class="pbi-row"><span class="pbi-rl">Top Fraud Type</span><span class="pbi-rv">'+(top||'&mdash;')+'</span></div>'+
+    '<div class="pbi-row"><span class="pbi-rl">Last Sync</span><span class="pbi-rv">'+new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})+'</span></div>';
+}
+function closePBI(){ document.getElementById('modalPBI').classList.remove('show'); }
+function pickFmt(f){
+  expFmt=f;
+  document.getElementById('efCSV').classList.toggle('sel',f==='csv');
+  document.getElementById('efJSON').classList.toggle('sel',f==='json');
+}
+
+function getExpSet(){
+  var dr=document.getElementById('expRng').value;
+  var sf=document.getElementById('expStat').value;
+  var now=new Date(), days=0;
+  if(dr==='7d') days=7; else if(dr==='30d') days=30; else if(dr==='90d') days=90;
+  var out=[];
+  for(var i=0;i<allCases.length;i++){
+    var c=allCases[i];
+    if(sf&&c.status!==sf) continue;
+    if(days){ var cut=new Date(now-days*864e5); if((c.rawDate||new Date(c.date))<cut) continue; }
+    out.push(c);
+  }
+  return out;
+}
+
+function doExport(){
+  var cases=getExpSet();
+  if(!cases.length){alert('No cases match the selected filters.');return;}
+  if(expFmt==='csv') doCSV(cases); else doJSON(cases);
+}
+
+function doCSV(cases){
+  var hdrs=['case_id','title','fraud_type','priority','risk_score','status','status_source','date','total_amount_ngn','amount_count','email_subject','email_from','sender_domain','is_internal_sender'];
+  var rows=cases.map(function(c){
+    return [c.id,'"'+(c.title||'').replace(/"/g,'""')+'"',c.fraudType||'Unclassified',c.priority,c.score||0,c.status,c.statusSource||'auto',c.date,c.amount||0,(c.amounts&&c.amounts.length)||0,'"'+(c.emailSubject||'').replace(/"/g,'""')+'"','"'+(c.emailFrom||'').replace(/"/g,'""')+'"',c.senderDomain||'',c.isInternal?'true':'false'].join(',');
+  });
+  dlB([hdrs.join(',')].concat(rows).join('\n'),'frauddesq_v2_'+dStr()+'.csv','text/csv');
+}
+
+function doJSON(cases){
+  var data=cases.map(function(c){return{case_id:c.id,title:c.title,fraud_type:c.fraudType||'Unclassified',priority:c.priority,risk_score:c.score||0,status:c.status,status_source:c.statusSource||'auto',date:c.date,total_amount_ngn:c.amount||0,amount_count:(c.amounts&&c.amounts.length)||0,individual_amounts:c.amounts||[],email_subject:c.emailSubject,email_from:c.emailFrom,sender_domain:c.senderDomain,is_internal_sender:c.isInternal};});
+  dlB(JSON.stringify(data,null,2),'frauddesq_v2_'+dStr()+'.json','application/json');
+}
+
+function dlB(content,filename,type){
+  var blob=new Blob([content],{type:type});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');
+  a.href=url; a.download=filename; a.click();
+  setTimeout(function(){URL.revokeObjectURL(url);},1000);
+}
+
+function dStr(){ var d=new Date(); return d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0'); }
+
+// ── NAV ──────────────────────────────────────────────
+function navTo(el){ document.querySelectorAll('.ni').forEach(function(n){n.classList.remove('on');}); el.classList.add('on'); }
+function setTab(el,tab){ document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('on');}); el.classList.add('on'); activeTab=tab; doFilter(); }
+
+// ── UTILS ─────────────────────────────────────────────
+function cap(s){return s?s.charAt(0).toUpperCase()+s.slice(1):'';}
+function fmtSt(s){if(s==='in-progress')return'In Progress';if(s==='pending')return'Pending';return cap(s);}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+// ── INIT ──────────────────────────────────────────────
+(function init(){
+  var p=new URLSearchParams(window.location.search);
+  if(p.get('state')==='fd_v2'){ if(handleCallback()) return; }
+  var stored; try{stored=sessionStorage.getItem('fd_tok');}catch(e){}
+  if(stored){
+    tokenVal=stored;
+    try{mbAddr=sessionStorage.getItem('fd_m')||'';}catch(e){}
+    document.getElementById('authWrap').classList.add('gone');
+    setConnected(); fetchAllEmails(); return;
+  }
+  document.getElementById('authWrap').classList.remove('gone');
+})();
+
+})();
+</script>
+</body>
+</html>
