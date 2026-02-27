@@ -3,1343 +3,166 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FraudDesq — Fidelity Bank</title>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<title>FraudDesq – Fidelity Bank</title>
+
+<!-- MSAL -->
+<script src="https://alcdn.msauth.net/browser/2.39.0/js/msal-browser.min.js"></script>
+
 <style>
-:root {
-  --bg-0:#08090d;--bg-1:#0d0f14;--bg-2:#121520;--bg-3:#181c28;--bg-4:#1e2333;
-  --border:rgba(255,255,255,0.065);--border-b:rgba(255,255,255,0.12);
-  --t0:#eef0f8;--t1:#8f99b2;--t2:#4e566e;
-  --blue:#4f8ef7;--bdim:rgba(79,142,247,0.13);
-  --teal:#2dd4bf;--tdim:rgba(45,212,191,0.12);
-  --green:#22c55e;--gdim:rgba(34,197,94,0.11);
-  --orange:#f97316;--odim:rgba(249,115,22,0.11);
-  --red:#ef4444;--rdim:rgba(239,68,68,0.11);
-  --yellow:#eab308;--ydim:rgba(234,179,8,0.11);
-  --purple:#a78bfa;--pdim:rgba(167,139,250,0.11);
-  --mono:'IBM Plex Mono',monospace;--sans:'IBM Plex Sans',sans-serif;
-  --sw:192px;
-}
-*{margin:0;padding:0;box-sizing:border-box}
-html,body{height:100%;overflow:hidden}
-body{background:var(--bg-0);color:var(--t0);font-family:var(--sans);font-size:13px;display:flex;flex-direction:column}
-
-/* ── AUTH OVERLAY ── */
-.auth-wrap{position:fixed;inset:0;background:rgba(8,9,13,0.96);backdrop-filter:blur(14px);z-index:9999;display:flex;align-items:center;justify-content:center;overflow-y:auto;padding:20px 0}
-.auth-wrap.gone{display:none}
-.auth-card{background:var(--bg-2);border:1px solid var(--border-b);border-radius:18px;padding:36px 42px;width:500px;box-shadow:0 50px 100px rgba(0,0,0,.75),0 0 0 1px rgba(79,142,247,0.06);position:relative}
-.auth-brand{display:flex;align-items:center;gap:11px;margin-bottom:26px}
-.brand-icon{width:36px;height:36px;background:linear-gradient(135deg,var(--blue),var(--teal));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;font-family:var(--mono);flex-shrink:0;box-shadow:0 4px 16px rgba(79,142,247,0.35)}
-.brand-name{font-size:16px;font-weight:700;color:var(--t0);letter-spacing:-.4px}
-.brand-sub{font-size:10px;color:var(--t2);text-transform:uppercase;letter-spacing:.6px;margin-top:1px}
-.auth-h{font-size:21px;font-weight:700;color:var(--t0);letter-spacing:-.4px;margin-bottom:6px}
-.auth-p{font-size:12px;color:var(--t1);line-height:1.6;margin-bottom:22px}
-.fl{display:block;font-size:10px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
-.fi{width:100%;padding:10px 13px;background:var(--bg-3);border:1px solid var(--border);border-radius:8px;color:var(--t0);font-family:var(--sans);font-size:13px;outline:none;transition:border .18s,background .18s;margin-bottom:12px}
-.fi:focus{border-color:var(--blue);background:var(--bg-4)}
-.fi::placeholder{color:var(--t2)}
-.fi.err-field{border-color:rgba(239,68,68,.5) !important;background:rgba(239,68,68,.04) !important}
-.auth-btn{width:100%;padding:12px;background:var(--blue);color:#fff;border:none;border-radius:9px;font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:4px;letter-spacing:.1px}
-.auth-btn:hover:not(:disabled){background:#3b7ef5;box-shadow:0 8px 28px rgba(79,142,247,.35);transform:translateY(-1px)}
-.auth-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
-
-/* ── ERROR / INFO BANNERS ── */
-.msg-box{border-radius:10px;padding:0;margin-bottom:14px;display:none;overflow:hidden;animation:slideIn .22s ease}
-.msg-box.show{display:block}
-@keyframes slideIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
-.msg-header{display:flex;align-items:center;gap:9px;padding:11px 14px;cursor:pointer;user-select:none}
-.msg-header:hover{filter:brightness(1.08)}
-.msg-icon{font-size:15px;flex-shrink:0}
-.msg-title{font-size:12.5px;font-weight:700;flex:1}
-.msg-chevron{font-size:11px;color:inherit;opacity:.7;transition:transform .2s;flex-shrink:0}
-.msg-chevron.open{transform:rotate(180deg)}
-.msg-body{padding:0 14px 13px;font-size:12px;line-height:1.75;display:none}
-.msg-body.open{display:block}
-.msg-body code{font-family:var(--mono);font-size:10.5px;background:rgba(255,255,255,.07);padding:2px 6px;border-radius:4px;word-break:break-all}
-.msg-body ol{padding-left:16px;margin-top:6px}
-.msg-body ol li{margin-bottom:5px}
-.msg-body .fix-link{color:inherit;font-weight:700;text-decoration:underline;cursor:pointer;opacity:.85}
-.msg-body .fix-link:hover{opacity:1}
-.msg-body .copy-uri{display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);padding:4px 10px;border-radius:5px;cursor:pointer;font-family:var(--mono);font-size:10.5px;margin-top:6px;transition:all .15s;color:inherit;word-break:break-all;flex-wrap:wrap}
-.msg-body .copy-uri:hover{background:rgba(255,255,255,.13)}
-.msg-body .copy-uri .uri-val{color:var(--teal)}
-
-/* error red */
-.msg-box.type-err{background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.22)}
-.msg-box.type-err .msg-header{color:var(--red)}
-.msg-box.type-err .msg-body{color:#f08080}
-/* warning orange */
-.msg-box.type-warn{background:rgba(249,115,22,.07);border:1px solid rgba(249,115,22,.22)}
-.msg-box.type-warn .msg-header{color:var(--orange)}
-.msg-box.type-warn .msg-body{color:#f4a261}
-/* info blue */
-.msg-box.type-info{background:var(--bdim);border:1px solid rgba(79,142,247,.22)}
-.msg-box.type-info .msg-header{color:var(--blue)}
-.msg-box.type-info .msg-body{color:#93b4f5}
-/* success green */
-.msg-box.type-ok{background:var(--gdim);border:1px solid rgba(34,197,94,.22)}
-.msg-box.type-ok .msg-header{color:var(--green)}
-.msg-box.type-ok .msg-body{color:#6ee79a}
-
-/* ── REDIRECT URI BOX ── */
-.redir-box{margin-top:14px;padding:10px 13px;background:var(--bg-3);border:1px solid var(--border);border-radius:8px}
-.redir-lbl{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--t2);margin-bottom:5px}
-.redir-row{display:flex;align-items:center;gap:7px}
-.redir-val{font-family:var(--mono);font-size:10.5px;color:var(--teal);flex:1;word-break:break-all}
-.redir-copy{flex-shrink:0;padding:4px 9px;background:var(--bg-4);border:1px solid var(--border);border-radius:5px;font-size:10.5px;color:var(--t1);cursor:pointer;transition:all .14s;font-family:var(--sans)}
-.redir-copy:hover{color:var(--t0);background:var(--bg-2)}
-.redir-copy.copied{color:var(--green);border-color:rgba(34,197,94,.3)}
-
-.auth-note{margin-top:16px;padding:12px 14px;background:var(--bdim);border:1px solid rgba(79,142,247,.18);border-radius:9px;font-size:11px;color:var(--blue);line-height:1.75}
-.auth-note strong{color:var(--t0)}
-.demo-lnk{text-align:center;margin-top:13px;font-size:11px;color:var(--t2)}
-.demo-lnk span{color:var(--blue);cursor:pointer;transition:opacity .15s}
-.demo-lnk span:hover{opacity:.75}
-.fg{margin-bottom:2px}
-
-/* ── LAYOUT ── */
-.shell{display:flex;flex:1;overflow:hidden;height:100vh}
-.sidebar{width:var(--sw);min-width:var(--sw);background:var(--bg-1);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
-.sb-logo{padding:16px 14px 13px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:9px}
-.nav-s{padding:10px 7px 4px}
-.nav-lbl{font-size:9px;font-weight:700;letter-spacing:1.1px;color:var(--t2);text-transform:uppercase;padding:4px 9px 6px}
-.ni{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:7px;cursor:pointer;color:var(--t1);font-size:12.5px;font-weight:500;transition:all .14s;position:relative;margin-bottom:1px;user-select:none}
-.ni:hover{background:var(--bg-3);color:var(--t0)}
-.ni.on{background:var(--bdim);color:var(--blue)}
-.ni.on::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);width:3px;height:18px;background:var(--blue);border-radius:0 3px 3px 0}
-.ni-ico{width:15px;text-align:center;font-size:13px;flex-shrink:0}
-.ni-badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;font-weight:700;padding:1px 5px;border-radius:10px;font-family:var(--mono)}
-.sb-foot{margin-top:auto;padding:11px 13px;border-top:1px solid var(--border);display:flex;align-items:center;gap:9px}
-.ava{width:29px;height:29px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0}
-.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
-.topbar{display:flex;align-items:center;gap:10px;padding:0 20px;height:50px;min-height:50px;border-bottom:1px solid var(--border);background:var(--bg-1);flex-shrink:0}
-.pg-title{font-size:15px;font-weight:700;color:var(--t0);letter-spacing:-.3px}
-.conn-badge{display:inline-flex;align-items:center;gap:5px;background:var(--gdim);border:1px solid rgba(34,197,94,.22);color:var(--green);font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;letter-spacing:.2px}
-.conn-badge::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--green);animation:blink 2s infinite}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
-.mb-pill{font-size:10.5px;color:var(--t2);font-family:var(--mono);background:var(--bg-3);border:1px solid var(--border);padding:3px 9px;border-radius:4px;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.tb-right{margin-left:auto;display:flex;align-items:center;gap:7px}
-.srch{display:flex;align-items:center;gap:7px;background:var(--bg-3);border:1px solid var(--border);border-radius:7px;padding:5px 10px;width:195px;transition:border .18s}
-.srch:focus-within{border-color:var(--blue)}
-.srch input{background:none;border:none;outline:none;color:var(--t0);font-family:var(--sans);font-size:12.5px;flex:1;min-width:0}
-.srch input::placeholder{color:var(--t2)}
-.ib{width:30px;height:30px;border-radius:6px;border:1px solid var(--border);background:var(--bg-3);cursor:pointer;color:var(--t1);display:flex;align-items:center;justify-content:center;font-size:14px;transition:all .14s;flex-shrink:0}
-.ib:hover{background:var(--bg-4);color:var(--t0)}
-.clock{font-size:11px;color:var(--t1);font-family:var(--mono);background:var(--bg-3);border:1px solid var(--border);padding:4px 9px;border-radius:5px;white-space:nowrap}
-.logic-bar{background:linear-gradient(90deg,rgba(79,142,247,.07),rgba(45,212,191,.04));border-bottom:1px solid rgba(79,142,247,.13);padding:5px 20px;display:flex;align-items:center;gap:6px;font-size:11px;color:var(--t2);flex-shrink:0;flex-wrap:wrap}
-.lchip{display:inline-flex;align-items:center;gap:4px;background:var(--bg-3);border:1px solid var(--border);padding:2px 8px;border-radius:4px;font-size:10.5px;color:var(--t1);font-family:var(--mono)}
-.lchip.on{border-color:rgba(79,142,247,.25);color:var(--blue);background:var(--bdim)}
-.stats{display:flex;gap:9px;padding:10px 20px;flex-shrink:0}
-.stat{flex:1;padding:11px 13px;background:var(--bg-2);border:1px solid var(--border);border-radius:8px;transition:border .2s}
-.stat:hover{border-color:var(--border-b)}
-.stat-lbl{font-size:9.5px;text-transform:uppercase;letter-spacing:.8px;color:var(--t2);font-weight:700;margin-bottom:4px}
-.stat-val{font-size:21px;font-weight:700;font-family:var(--mono);color:var(--t0);line-height:1}
-.stat-note{font-size:10px;margin-top:3px;color:var(--t2)}
-.stat-note.up{color:var(--green)}.stat-note.warn{color:var(--orange)}.stat-note.bad{color:var(--red)}
-.toolbar{display:flex;align-items:center;gap:7px;padding:9px 20px 0;flex-shrink:0;flex-wrap:wrap}
-.vbtn{display:flex;align-items:center;gap:5px;padding:5px 11px;border-radius:6px;font-size:12px;font-weight:500;cursor:pointer;border:1px solid var(--border);color:var(--t1);background:transparent;transition:all .14s;font-family:var(--sans)}
-.vbtn.on,.vbtn:hover{background:var(--bg-3);color:var(--t0);border-color:var(--border-b)}
-.divv{width:1px;height:18px;background:var(--border);margin:0 3px}
-.fsel{padding:5px 22px 5px 9px;border-radius:6px;background:var(--bg-3);border:1px solid var(--border);color:var(--t1);font-family:var(--sans);font-size:11.5px;cursor:pointer;outline:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='9' height='5'%3E%3Cpath d='M0 0l4.5 5L9 0z' fill='%234e566e'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 7px center}
-.btn-pbi{display:flex;align-items:center;gap:6px;padding:5px 12px;border-radius:7px;background:rgba(234,179,8,.1);color:var(--yellow);border:1px solid rgba(234,179,8,.22);font-family:var(--sans);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s}
-.btn-pbi:hover{background:rgba(234,179,8,.18)}
-.btn-new{display:flex;align-items:center;gap:6px;padding:5px 13px;border-radius:7px;background:var(--blue);color:#fff;border:none;font-family:var(--sans);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s}
-.btn-new:hover{background:#3b7ef5;box-shadow:0 3px 14px rgba(79,142,247,.3)}
-.tabs{display:flex;gap:2px;padding:9px 20px 0;flex-shrink:0}
-.tab{display:flex;align-items:center;gap:5px;padding:6px 13px;border-radius:6px 6px 0 0;font-size:12px;font-weight:500;cursor:pointer;color:var(--t1);border:1px solid transparent;border-bottom:none;transition:all .14s;user-select:none}
-.tab.on{background:var(--bg-2);color:var(--t0);border-color:var(--border)}
-.tab:hover:not(.on){color:var(--t0)}
-.tc{display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;font-family:var(--mono);min-width:17px;height:15px;padding:0 4px;border-radius:3px}
-.tc.o{background:var(--gdim);color:var(--green)}.tc.p{background:var(--bdim);color:var(--blue)}.tc.e{background:var(--odim);color:var(--orange)}.tc.c{background:rgba(78,86,110,.18);color:var(--t2)}
-.tbl-wrap{flex:1;overflow:auto;margin:0 20px;background:var(--bg-2);border:1px solid var(--border);border-top:none;border-radius:0 0 10px 10px;min-height:0}
-table{width:100%;border-collapse:collapse}
-thead tr{border-bottom:1px solid var(--border);background:var(--bg-3);position:sticky;top:0;z-index:2}
-th{padding:8px 14px;text-align:left;font-size:10px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;color:var(--t2);white-space:nowrap;cursor:pointer;user-select:none;transition:color .14s}
-th:hover{color:var(--t1)}
-th.sort-asc::after{content:' ↑';color:var(--blue)}
-th.sort-desc::after{content:' ↓';color:var(--blue)}
-td{padding:9px 14px;font-size:12.5px;border-bottom:1px solid var(--border);color:var(--t0);white-space:nowrap;transition:background .12s}
-tr:last-child td{border-bottom:none}
-tr.r:hover td{background:rgba(255,255,255,.022);cursor:pointer}
-tr.r.sel td{background:var(--bdim)}
-.cid{font-family:var(--mono);font-size:11px;color:var(--blue);font-weight:500}
-.ctitle{max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.score-bar{display:flex;align-items:center;gap:7px}
-.score-num{font-family:var(--mono);font-size:11px;font-weight:600;min-width:22px}
-.score-track{width:54px;height:4px;background:var(--bg-4);border-radius:2px;overflow:hidden}
-.score-fill{height:100%;border-radius:2px;transition:width .3s}
-.pri{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:4px;letter-spacing:.1px}
-.pri::before{content:'';width:5px;height:5px;border-radius:50%;display:inline-block;flex-shrink:0}
-.pri.critical{background:var(--rdim);color:var(--red)}.pri.critical::before{background:var(--red)}
-.pri.high{background:var(--odim);color:var(--orange)}.pri.high::before{background:var(--orange)}
-.pri.medium{background:var(--ydim);color:var(--yellow)}.pri.medium::before{background:var(--yellow)}
-.pri.low{background:var(--gdim);color:var(--green)}.pri.low::before{background:var(--green)}
-.sb{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:4px}
-.sb::before{content:'';width:5px;height:5px;border-radius:50%;display:inline-block;flex-shrink:0}
-.sb.open{background:var(--gdim);color:var(--green)}.sb.open::before{background:var(--green)}
-.sb.in-progress{background:var(--bdim);color:var(--blue)}.sb.in-progress::before{background:var(--blue);animation:blink 1.4s infinite}
-.sb.escalated{background:var(--odim);color:var(--orange)}.sb.escalated::before{background:var(--orange);animation:blink 1s infinite}
-.sb.closed{background:rgba(78,86,110,.15);color:var(--t2)}.sb.closed::before{background:var(--t2)}
-.sb.pending{background:var(--pdim);color:var(--purple)}.sb.pending::before{background:var(--purple)}
-.amt{font-family:var(--mono);font-size:12px;font-weight:600}
-.dc{color:var(--t1);font-size:11px;font-family:var(--mono)}
-.ftype{font-size:11px;color:var(--t1);background:var(--bg-3);border:1px solid var(--border);padding:1px 7px;border-radius:3px;font-family:var(--mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px;display:inline-block}
-.empty{text-align:center;padding:60px;color:var(--t2)}
-.pg-bar{display:flex;align-items:center;gap:7px;padding:7px 20px;border-top:1px solid var(--border);background:var(--bg-1);font-size:12px;color:var(--t1);flex-shrink:0}
-.pgb{padding:3px 9px;border-radius:5px;background:var(--bg-3);border:1px solid var(--border);color:var(--t1);cursor:pointer;font-size:11.5px;transition:all .13s;font-family:var(--sans)}
-.pgb:hover:not(:disabled){background:var(--bg-4);color:var(--t0)}
-.pgb:disabled{opacity:.28;cursor:not-allowed}
-.pgb.on{background:var(--bdim);color:var(--blue);border-color:rgba(79,142,247,.28)}
-.pg-inf{margin-left:auto;font-family:var(--mono);font-size:10.5px;color:var(--t2)}
-.panel{position:fixed;right:0;top:0;bottom:0;width:510px;background:var(--bg-2);border-left:1px solid var(--border-b);z-index:500;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .28s cubic-bezier(.4,0,.2,1);box-shadow:-24px 0 70px rgba(0,0,0,.45)}
-.panel.open{transform:translateX(0)}
-.pn-hd{padding:16px 18px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:10px;flex-shrink:0}
-.pn-x{margin-left:auto;cursor:pointer;width:26px;height:26px;display:flex;align-items:center;justify-content:center;border-radius:5px;color:var(--t2);font-size:16px;transition:all .13s;flex-shrink:0}
-.pn-x:hover{background:var(--bg-3);color:var(--t0)}
-.pn-body{flex:1;overflow-y:auto;padding:18px}
-.ds{margin-bottom:22px}
-.ds-t{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:1.1px;color:var(--t2);margin-bottom:10px;display:flex;align-items:center;gap:8px}
-.ds-t::after{content:'';flex:1;height:1px;background:var(--border)}
-.dg2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.dg3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
-.df .fl2{font-size:10px;color:var(--t2);margin-bottom:3px}
-.df .fv{font-size:13px;color:var(--t0);font-weight:500}
-.df .fv.mono{font-family:var(--mono);font-size:11.5px}
-.score-card{background:var(--bg-3);border:1px solid var(--border);border-radius:9px;padding:14px;margin-bottom:14px}
-.score-big{display:flex;align-items:center;gap:12px;margin-bottom:12px}
-.score-circle{width:54px;height:54px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:20px;font-weight:700;flex-shrink:0;border:2px solid}
-.score-row{display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);font-size:11.5px}
-.score-row:last-child{border-bottom:none}
-.score-key{color:var(--t1);display:flex;align-items:center;gap:6px}
-.score-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
-.score-pts{font-family:var(--mono);font-size:11px;font-weight:600}
-.score-max{color:var(--t2);font-size:10px;margin-left:2px}
-.email-box{background:var(--bg-3);border:1px solid var(--border);border-radius:8px;padding:13px}
-.email-from{font-size:11.5px;color:var(--t1);margin-bottom:3px}
-.email-subj{font-size:13px;font-weight:600;color:var(--t0);margin-bottom:8px;line-height:1.4}
-.email-body{font-size:11.5px;color:var(--t1);line-height:1.65;max-height:110px;overflow:hidden;position:relative}
-.email-body::after{content:'';position:absolute;bottom:0;left:0;right:0;height:32px;background:linear-gradient(transparent,var(--bg-3))}
-.ai-box{background:linear-gradient(135deg,rgba(79,142,247,.07),rgba(45,212,191,.04));border:1px solid rgba(79,142,247,.18);border-radius:8px;padding:13px}
-.ai-lbl{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--blue);margin-bottom:8px;display:flex;align-items:center;gap:6px}
-.ai-txt{font-size:12px;color:var(--t0);line-height:1.65}
-.amt-table{width:100%;border-collapse:collapse;font-size:12px}
-.amt-table td{padding:5px 8px;border-bottom:1px solid var(--border)}
-.amt-table tr:last-child td{border-bottom:none}
-.amt-table td:first-child{color:var(--t1);font-size:11px}
-.amt-table td:last-child{font-family:var(--mono);font-weight:600;text-align:right}
-.amt-total{background:var(--bg-4) !important}
-.amt-total td{font-weight:700 !important;color:var(--t0) !important}
-.tl-item{display:flex;gap:11px;padding-bottom:13px;position:relative}
-.tl-item::before{content:'';position:absolute;left:6px;top:16px;width:1px;bottom:0;background:var(--border)}
-.tl-item:last-child::before{display:none}
-.tl-dot{width:13px;height:13px;border-radius:50%;background:var(--bg-4);border:2px solid var(--border-b);flex-shrink:0;margin-top:2px}
-.tl-dot.b{border-color:var(--blue);background:var(--bdim)}
-.tl-act{font-size:12px;color:var(--t0);font-weight:500}
-.tl-meta{font-size:10.5px;color:var(--t2);margin-top:2px}
-.pn-btns{display:flex;gap:7px;margin-top:4px}
-.pn-btns button{flex:1;padding:8px;border-radius:7px;font-family:var(--sans);font-size:12px;font-weight:600;cursor:pointer;border:none;transition:all .14s}
-.pb-prog{background:var(--blue);color:#fff}.pb-prog:hover{background:#3b7ef5}
-.pb-esc{background:var(--orange);color:#fff}.pb-esc:hover{filter:brightness(1.12)}
-.pb-cls{background:var(--bg-4);color:var(--t1);border:1px solid var(--border) !important}.pb-cls:hover{color:var(--t0)}
-.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.72);backdrop-filter:blur(5px);z-index:800;display:none;align-items:center;justify-content:center}
-.modal-bg.show{display:flex}
-.modal{background:var(--bg-2);border:1px solid var(--border-b);border-radius:13px;padding:28px;width:500px;box-shadow:0 30px 70px rgba(0,0,0,.6);max-height:92vh;overflow-y:auto}
-.modal-h{font-size:16px;font-weight:700;margin-bottom:5px;letter-spacing:-.3px}
-.modal-s{font-size:12.5px;color:var(--t1);margin-bottom:20px;line-height:1.5}
-.modal-foot{display:flex;gap:9px;justify-content:flex-end;margin-top:20px}
-.btn-sec{padding:8px 15px;border-radius:7px;background:var(--bg-3);border:1px solid var(--border);color:var(--t1);font-family:var(--sans);font-size:12.5px;cursor:pointer;transition:all .14s}
-.btn-sec:hover{color:var(--t0);background:var(--bg-4)}
-.btn-sm{padding:8px 15px;border-radius:7px;background:var(--blue);border:none;color:#fff;font-family:var(--sans);font-size:12.5px;font-weight:600;cursor:pointer;transition:all .15s}
-.btn-sm:hover{background:#3b7ef5}
-.btn-y{padding:8px 15px;border-radius:7px;background:rgba(234,179,8,.12);border:1px solid rgba(234,179,8,.28);color:var(--yellow);font-family:var(--sans);font-size:12.5px;font-weight:600;cursor:pointer;transition:all .15s}
-.btn-y:hover{background:rgba(234,179,8,.22)}
-.frow{display:grid;grid-template-columns:1fr 1fr;gap:11px}
-.fg{margin-bottom:13px}
-.pbi-s{background:var(--bg-3);border:1px solid var(--border);border-radius:8px;padding:13px;margin-bottom:13px}
-.pbi-st{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--t2);margin-bottom:9px}
-.pbi-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--border);font-size:12px}
-.pbi-row:last-child{border-bottom:none}
-.pbi-rl{color:var(--t1)}.pbi-rv{font-family:var(--mono);color:var(--t0);font-weight:600}
-.ef-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:11px}
-.ef-btn{padding:9px;border-radius:7px;background:var(--bg-4);border:1px solid var(--border);cursor:pointer;transition:all .14s;text-align:center}
-.ef-btn:hover,.ef-btn.sel{border-color:rgba(234,179,8,.35);background:rgba(234,179,8,.07)}
-.ef-ico{font-size:18px;margin-bottom:3px}.ef-nm{font-size:12px;font-weight:600;color:var(--t0)}.ef-ds{font-size:10px;color:var(--t2);margin-top:2px}
-@keyframes spin{to{transform:rotate(360deg)}}
-@keyframes fadeUp{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
-.row-in{animation:fadeUp .3s ease both}
-::-webkit-scrollbar{width:4px;height:4px}
-::-webkit-scrollbar-thumb{background:var(--bg-4);border-radius:2px}
+body{font-family:Arial, sans-serif;background:#0b1220;color:#fff;margin:0}
+button{padding:10px 18px;border:none;border-radius:6px;background:#2563eb;color:#fff;cursor:pointer}
+#overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:#0b1220;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.hidden{display:none}
+.table{width:100%;border-collapse:collapse;margin-top:20px}
+.table th,.table td{padding:10px;border-bottom:1px solid #1e293b}
+.badge{background:#16a34a;padding:4px 10px;border-radius:6px}
 </style>
 </head>
+
 <body>
 
-<!-- ═══════════════════ AUTH SCREEN ═══════════════════ -->
-<div class="auth-wrap" id="authWrap">
-  <div class="auth-card">
-    <div class="auth-brand">
-      <div class="brand-icon">FD</div>
-      <div>
-        <div class="brand-name">FraudDesq</div>
-        <div class="brand-sub">Fidelity Bank &middot; Fraud Intelligence</div>
-      </div>
-    </div>
-    <div class="auth-h">Connect Outlook Mailbox</div>
-    <div class="auth-p">Enter your Microsoft credentials to connect FraudDesq to the shared fraud inbox.</div>
-
-    <!-- ── MESSAGE BOXES (collapsed by default, expand on click) ── -->
-    <div class="msg-box" id="msgBox">
-      <div class="msg-header" onclick="toggleMsg()">
-        <span class="msg-icon" id="msgIcon"></span>
-        <span class="msg-title" id="msgTitle"></span>
-        <span class="msg-chevron" id="msgChevron">&#9660;</span>
-      </div>
-      <div class="msg-body" id="msgBody"></div>
-    </div>
-
-    <div class="fg"><label class="fl">Shared Mailbox Address</label><input class="fi" type="email" id="inpMb" placeholder="fraud@fidelitybank.com" autocomplete="off"></div>
-    <div class="fg"><label class="fl">Azure AD Tenant ID</label><input class="fi" type="text" id="inpTid" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" autocomplete="off" spellcheck="false"></div>
-    <div class="fg"><label class="fl">App Client ID</label><input class="fi" type="text" id="inpCid" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" autocomplete="off" spellcheck="false"></div>
-
-    <button class="auth-btn" id="authBtn" onclick="doConnect()">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="2" y="2" width="9" height="9" rx="1.5"/><rect x="13" y="2" width="9" height="9" rx="1.5"/><rect x="2" y="13" width="9" height="9" rx="1.5"/><rect x="13" y="13" width="9" height="9" rx="1.5"/></svg>
-      Connect via Microsoft OAuth
-    </button>
-
-    <!-- Redirect URI helper — always visible -->
-    <div class="redir-box">
-      <div class="redir-lbl">&#9432; Register this Redirect URI in Azure Portal</div>
-      <div class="redir-row">
-        <div class="redir-val" id="redirVal">—</div>
-        <button class="redir-copy" id="redirCopyBtn" onclick="copyRedirUri()">Copy</button>
-      </div>
-    </div>
-
-    <div class="auth-note">
-      <strong>After connecting:</strong> Emails are fetched via Graph API &rarr; fraud type classified &rarr; risk scored across 6 signals &rarr; &#8358; amounts extracted automatically.
-    </div>
-    <div class="demo-lnk">No credentials? <span onclick="runDemo()">Load demo mode &rarr;</span></div>
-  </div>
+<div id="overlay">
+<h2>Connect Outlook Mailbox</h2>
+<button id="loginBtn">Connect via Microsoft</button>
 </div>
 
-<!-- ═══════════════════ APP SHELL ═══════════════════ -->
-<div class="shell">
-<nav class="sidebar">
-  <div class="sb-logo">
-    <div class="brand-icon" style="width:28px;height:28px;font-size:12px">FD</div>
-    <div><div class="brand-name" style="font-size:13px">FraudDesq</div><div class="brand-sub" style="font-size:9px">Fidelity Bank</div></div>
-  </div>
-  <div class="nav-s">
-    <div class="nav-lbl">Monitoring</div>
-    <div class="ni" onclick="navTo(this)"><span class="ni-ico">&#11041;</span> Dashboard</div>
-    <div class="ni" onclick="navTo(this)"><span class="ni-ico">&#9889;</span> Transactions <span class="ni-badge">3</span></div>
-  </div>
-  <div class="nav-s">
-    <div class="nav-lbl">Intelligence</div>
-    <div class="ni" onclick="navTo(this)"><span class="ni-ico">&#10696;</span> Risk Sniper</div>
-    <div class="ni" onclick="navTo(this)"><span class="ni-ico">&#10763;</span> Decision Engine</div>
-  </div>
-  <div class="nav-s">
-    <div class="nav-lbl">Operations</div>
-    <div class="ni on" onclick="navTo(this)"><span class="ni-ico">&#10782;</span> Case Management</div>
-    <div class="ni" onclick="navTo(this)"><span class="ni-ico">&#9707;</span> Analytics</div>
-    <div class="ni" onclick="navTo(this)"><span class="ni-ico">&#128202;</span> Power BI</div>
-    <div class="ni" onclick="navTo(this)"><span class="ni-ico">&#9881;</span> Settings</div>
-  </div>
-  <div class="sb-foot">
-    <div class="ava">MA</div>
-    <div><div style="font-size:12px;font-weight:600;color:var(--t0)">Muhammed A.</div><div style="font-size:10px;color:var(--t2)">Security Analyst</div></div>
-  </div>
-</nav>
-
-<div class="main">
-  <div class="topbar">
-    <div class="pg-title">Case Management</div>
-    <span class="conn-badge" id="connBadge" style="display:none">Connected</span>
-    <span class="mb-pill" id="mbPill" style="display:none"></span>
-    <div style="margin-left:6px"><div class="srch"><span style="color:var(--t2);font-size:12px">&#9906;</span><input type="text" placeholder="Search cases..." id="srchInp" oninput="doFilter()"></div></div>
-    <div class="tb-right">
-      <div class="clock" id="clockEl"></div>
-      <div class="ib" style="color:var(--yellow);font-size:11px" onclick="openPBI()" title="Power BI">&#128202;</div>
-      <div class="ib" id="syncIco" onclick="doSync()" title="Sync">&#8635;</div>
-      <div class="ib" style="color:var(--blue);font-size:11px;font-weight:700">&#8862;</div>
-      <div class="ava" style="width:28px;height:28px;font-size:10px">MA</div>
-    </div>
-  </div>
-  <div class="logic-bar">
-    <span style="font-weight:600;color:var(--t1)">Classification engine:</span>
-    <span class="lchip on">&#10003; Priority scoring (6 signals)</span>
-    <span class="lchip on">&#10003; Keyword status detection</span>
-    <span class="lchip on">&#10003; Multi-amount extraction</span>
-    <span class="lchip on">&#10003; Full body fetch</span>
-    <span class="lchip on">&#10003; Sender trust scoring</span>
-  </div>
-  <div class="stats">
-    <div class="stat"><div class="stat-lbl">Total Cases</div><div class="stat-val" id="sTotal">0</div><div class="stat-note up" id="sTotalN">&#8593; Loading</div></div>
-    <div class="stat"><div class="stat-lbl">Open</div><div class="stat-val" id="sOpen" style="color:var(--green)">0</div><div class="stat-note">New / unhandled</div></div>
-    <div class="stat"><div class="stat-lbl">In Progress</div><div class="stat-val" id="sProg" style="color:var(--blue)">0</div><div class="stat-note">Being investigated</div></div>
-    <div class="stat"><div class="stat-lbl">Escalated</div><div class="stat-val" id="sEsc" style="color:var(--orange)">0</div><div class="stat-note warn" id="sEscN">Priority action</div></div>
-    <div class="stat"><div class="stat-lbl">Closed</div><div class="stat-val" id="sClosed" style="color:var(--t2)">0</div><div class="stat-note">Resolved</div></div>
-    <div class="stat"><div class="stat-lbl">Total Exposure</div><div class="stat-val" id="sExp" style="color:var(--red);font-size:15px">&#8358;0</div><div class="stat-note bad">&#8358; At risk</div></div>
-  </div>
-  <div class="toolbar">
-    <button class="vbtn on">&#10782; Table</button>
-    <button class="vbtn">&#10783; Kanban</button>
-    <div class="divv"></div>
-    <select class="fsel" id="fStat" onchange="doFilter()"><option value="">All Statuses</option><option value="open">Open</option><option value="in-progress">In Progress</option><option value="escalated">Escalated</option><option value="closed">Closed</option><option value="pending">Pending Review</option></select>
-    <select class="fsel" id="fPri" onchange="doFilter()"><option value="">All Priorities</option><option value="critical">Critical</option><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option></select>
-    <select class="fsel" id="fType" onchange="doFilter()"><option value="">All Fraud Types</option></select>
-    <button class="btn-pbi" onclick="openPBI()">&#128202; Power BI</button>
-    <button class="btn-new" onclick="openNewCase()">+ New Case</button>
-  </div>
-  <div class="tabs">
-    <div class="tab on" onclick="setTab(this,'all')">All <span class="tc o" id="tAll">0</span></div>
-    <div class="tab" onclick="setTab(this,'open')">Open <span class="tc o" id="tOpen">0</span></div>
-    <div class="tab" onclick="setTab(this,'in-progress')">In Progress <span class="tc p" id="tProg">0</span></div>
-    <div class="tab" onclick="setTab(this,'escalated')">Escalated <span class="tc e" id="tEsc">0</span></div>
-    <div class="tab" onclick="setTab(this,'closed')">Closed <span class="tc c" id="tClosed">0</span></div>
-  </div>
-  <div class="tbl-wrap">
-    <table>
-      <thead><tr>
-        <th onclick="doSort('id')">CASE ID</th><th onclick="doSort('title')">TITLE</th>
-        <th onclick="doSort('fraudType')">FRAUD TYPE</th><th onclick="doSort('priority')">PRIORITY</th>
-        <th onclick="doSort('score')">RISK SCORE</th><th onclick="doSort('status')">STATUS</th>
-        <th onclick="doSort('date')">DATE</th><th onclick="doSort('amount')">TOTAL EXPOSURE</th>
-      </tr></thead>
-      <tbody id="tBody">
-        <tr><td colspan="8" style="text-align:center;padding:50px;color:var(--t2)">
-          <span style="display:inline-block;width:13px;height:13px;border:2px solid var(--border-b);border-top-color:var(--blue);border-radius:50%;animation:spin .7s linear infinite;margin-right:8px;vertical-align:middle"></span>
-          Waiting for authentication...
-        </td></tr>
-      </tbody>
-    </table>
-  </div>
-  <div class="pg-bar">
-    <button class="pgb" id="pgF" onclick="goPage(1)">&#171;</button>
-    <button class="pgb" id="pgP" onclick="goPage(curPg-1)">&#8249;</button>
-    <span id="pgNums" style="display:flex;gap:4px"></span>
-    <button class="pgb" id="pgN" onclick="goPage(curPg+1)">&#8250;</button>
-    <button class="pgb" id="pgL" onclick="goPage(totPg)">&#187;</button>
-    <select class="fsel" id="pgSz" onchange="changePgSz()" style="margin-left:7px">
-      <option value="25">25/page</option><option value="50" selected>50/page</option>
-      <option value="100">100/page</option><option value="200">200/page</option>
-    </select>
-    <div class="pg-inf" id="pgInf">&mdash;</div>
-  </div>
-</div>
+<div id="app" class="hidden">
+<h2>Case Dashboard <span class="badge" id="status">Connected</span></h2>
+<p id="mailbox"></p>
+<table class="table">
+<thead>
+<tr>
+<th>Case ID</th>
+<th>Subject</th>
+<th>Sender</th>
+<th>Received</th>
+</tr>
+</thead>
+<tbody id="cases"></tbody>
+</table>
 </div>
 
-<!-- DETAIL PANEL -->
-<div class="panel" id="detPanel">
-  <div class="pn-hd">
-    <div>
-      <div style="font-family:var(--mono);font-size:13px;color:var(--blue);font-weight:500;margin-bottom:3px" id="pnId"></div>
-      <div style="font-size:14px;font-weight:600;color:var(--t0);line-height:1.3" id="pnTitle"></div>
-    </div>
-    <div class="pn-x" onclick="closePanel()">&#10005;</div>
-  </div>
-  <div class="pn-body" id="pnBody"></div>
-</div>
-
-<!-- NEW CASE MODAL -->
-<div class="modal-bg" id="modalNew">
-  <div class="modal">
-    <div class="modal-h">+ New Case</div>
-    <div class="modal-s">Manually create a fraud case. Classification engine will score it automatically.</div>
-    <div class="fg"><label class="fl">Case Title</label><input class="fi" type="text" id="nTitle" placeholder="Brief description"></div>
-    <div class="frow">
-      <div class="fg"><label class="fl">Fraud Type</label>
-        <select class="fi" id="nType"><option>SIM Swap Fraud</option><option>Phishing</option><option>Identity Theft</option><option>Unauthorized Transfer</option><option>Card Fraud</option><option>Insider Threat</option><option>Money Laundering</option><option>Investment Scam</option><option>Account Takeover</option><option>BEC</option></select>
-      </div>
-      <div class="fg"><label class="fl">Override Priority</label>
-        <select class="fi" id="nPri"><option value="">Auto-score</option><option value="critical">Critical</option><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option></select>
-      </div>
-    </div>
-    <div class="frow">
-      <div class="fg"><label class="fl">Amount (&#8358;)</label><input class="fi" type="number" id="nAmt" placeholder="0"></div>
-      <div class="fg"><label class="fl">Override Status</label>
-        <select class="fi" id="nStat"><option value="">Auto-detect</option><option value="open">Open</option><option value="in-progress">In Progress</option><option value="escalated">Escalated</option></select>
-      </div>
-    </div>
-    <div class="modal-foot">
-      <button class="btn-sec" onclick="closeNewCase()">Cancel</button>
-      <button class="btn-sm" onclick="submitNewCase()">Create Case</button>
-    </div>
-  </div>
-</div>
-
-<!-- POWER BI MODAL -->
-<div class="modal-bg" id="modalPBI">
-  <div class="modal" style="width:550px">
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:5px"><span style="font-size:20px">&#128202;</span><div class="modal-h" style="margin-bottom:0">Power BI Export</div></div>
-    <div class="modal-s">Export classified case data to Power BI Desktop.</div>
-    <div class="pbi-s">
-      <div class="pbi-st">Export Format</div>
-      <div class="ef-grid">
-        <div class="ef-btn sel" id="efCSV" onclick="pickFmt('csv')"><div class="ef-ico">&#128196;</div><div class="ef-nm">CSV</div><div class="ef-ds">Recommended for Power BI</div></div>
-        <div class="ef-btn" id="efJSON" onclick="pickFmt('json')"><div class="ef-ico">{ }</div><div class="ef-nm">JSON</div><div class="ef-ds">API / custom connectors</div></div>
-      </div>
-      <div style="display:flex;gap:7px;flex-wrap:wrap;align-items:center">
-        <select class="fsel" id="expRng"><option value="all">All time</option><option value="7d">Last 7 days</option><option value="30d">Last 30 days</option><option value="90d">Last 90 days</option></select>
-        <select class="fsel" id="expStat"><option value="">All statuses</option><option value="open">Open</option><option value="escalated">Escalated</option><option value="closed">Closed</option></select>
-        <button class="btn-y" onclick="doExport()" style="margin-left:auto">&#8595; Download</button>
-      </div>
-      <div style="margin-top:10px;padding:9px;background:var(--bg-0);border-radius:6px;border:1px solid var(--border)">
-        <div style="font-size:9.5px;color:var(--t2);font-weight:700;text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px">Fields exported</div>
-        <div style="font-family:var(--mono);font-size:10.5px;color:var(--teal);line-height:1.9">case_id &middot; title &middot; fraud_type &middot; priority &middot; risk_score &middot; status &middot; status_source &middot; date &middot; total_amount_ngn &middot; amount_count &middot; email_subject &middot; email_from &middot; sender_domain &middot; is_internal_sender</div>
-      </div>
-    </div>
-    <div class="pbi-s"><div class="pbi-st">&#128200; Live Snapshot</div><div id="pbiSnap"></div></div>
-    <div class="modal-foot"><button class="btn-sec" onclick="closePBI()">Close</button></div>
-  </div>
-</div>
-
-<!-- ═══════════════════ SCRIPT ═══════════════════ -->
 <script>
-(function(){
-'use strict';
 
-// ═══════════════════════════════════════════════════════
-// ERROR GUIDE SYSTEM
-// Every auth failure maps to a specific error code.
-// showGuide(code, extra) renders a fully expanded,
-// step-by-step fix panel in the auth card.
-// ═══════════════════════════════════════════════════════
+// ================= CONFIG =================
+const sharedMailbox = "ElectronicFraudTeam@fidelitybank.ng";
 
-var GUIDES = {
-
-  'NO_HTTPS': {
-    type: 'err',
-    icon: '🔒',
-    title: 'Page must be served over HTTPS',
-    body: function(r) {
-      return '<p>Microsoft OAuth and browser crypto APIs require a secure HTTPS connection. '
-        + 'Your page is currently on <code>' + r.protocol + '</code>.</p>'
-        + '<ol>'
-        + '<li>Upload this file to a web host that provides HTTPS — you already have one: '
-        + '<code>https://happy-mud-04f0a2f1e.6.azurestaticapps.net</code></li>'
-        + '<li>Or use <strong>VS Code Live Server</strong> with HTTPS enabled.</li>'
-        + '<li>Alternatively run <code>npx serve --ssl</code> locally.</li>'
-        + '</ol>';
+const msalConfig = {
+    auth: {
+        clientId: "YOUR_CLIENT_ID",
+        authority: "https://login.microsoftonline.com/YOUR_TENANT_ID",
+        redirectUri: window.location.origin
     }
-  },
-
-  'NO_CRYPTO': {
-    type: 'err',
-    icon: '🔑',
-    title: 'Browser does not support Web Crypto API',
-    body: function() {
-      return '<p>This browser is missing the <code>crypto.subtle</code> API needed to generate a secure OAuth challenge.</p>'
-        + '<ol>'
-        + '<li>Use a modern browser: <strong>Chrome 80+</strong>, <strong>Edge 80+</strong>, <strong>Firefox 75+</strong>, or <strong>Safari 14+</strong>.</li>'
-        + '<li>Make sure the page is on HTTPS — crypto.subtle is disabled on HTTP.</li>'
-        + '<li>Disable any aggressive security extensions that may block browser APIs.</li>'
-        + '</ol>';
-    }
-  },
-
-  'EMPTY_MB': {
-    type: 'warn',
-    icon: '📧',
-    title: 'Mailbox address is required',
-    body: function() {
-      return '<p>Enter the shared fraud mailbox address, for example: <code>fraud@fidelitybank.com</code></p>'
-        + '<ol>'
-        + '<li>This must be the <strong>shared mailbox</strong> your fraud team uses, not your personal account.</li>'
-        + '<li>Make sure the Azure app has <strong>Mail.Read</strong> permission on this mailbox.</li>'
-        + '<li>If you want to connect to your own inbox instead, enter your own email address.</li>'
-        + '</ol>';
-    }
-  },
-
-  'BAD_TID': {
-    type: 'warn',
-    icon: '🆔',
-    title: 'Tenant ID format is invalid',
-    body: function() {
-      return '<p>The Tenant ID must be a GUID in this exact format: <code>xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx</code></p>'
-        + '<ol>'
-        + '<li>Go to <strong>Azure Portal → Azure Active Directory → Overview</strong>.</li>'
-        + '<li>Copy the <strong>Tenant ID</strong> field — it looks like: <code>3d4e5f6a-1b2c-...</code></li>'
-        + '<li>Paste it here. Do not add any spaces or extra characters.</li>'
-        + '</ol>';
-    }
-  },
-
-  'BAD_CID': {
-    type: 'warn',
-    icon: '🔧',
-    title: 'Client ID format is invalid',
-    body: function() {
-      return '<p>The Client ID must also be a GUID: <code>xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx</code></p>'
-        + '<ol>'
-        + '<li>Go to <strong>Azure Portal → App Registrations → your app → Overview</strong>.</li>'
-        + '<li>Copy the <strong>Application (client) ID</strong> field.</li>'
-        + '<li>Do not confuse it with the Object ID or Directory ID.</li>'
-        + '</ol>';
-    }
-  },
-
-  'NO_STORAGE': {
-    type: 'err',
-    icon: '💾',
-    title: 'sessionStorage is blocked',
-    body: function() {
-      return '<p>FraudDesq uses <code>sessionStorage</code> to securely pass the OAuth verifier across the redirect. It appears to be blocked.</p>'
-        + '<ol>'
-        + '<li>In <strong>Chrome</strong>: go to Settings → Privacy → Cookies → allow cookies for this site.</li>'
-        + '<li>In <strong>Edge</strong>: Settings → Cookies and site permissions → Cookies → allow.</li>'
-        + '<li>Disable any browser extension that blocks local storage (e.g. Privacy Badger).</li>'
-        + '<li>Make sure you are not in a strict Incognito/Private window with storage disabled.</li>'
-        + '</ol>';
-    }
-  },
-
-  'CRYPTO_FAIL': {
-    type: 'err',
-    icon: '🔐',
-    title: 'Failed to generate secure OAuth challenge',
-    body: function(r) {
-      return '<p>The PKCE code challenge generation threw an error: <code>' + (r.msg||'Unknown') + '</code></p>'
-        + '<ol>'
-        + '<li>Confirm the page URL starts with <strong>https://</strong> — this is required for <code>crypto.subtle</code>.</li>'
-        + '<li>Try a different browser (Chrome or Edge recommended).</li>'
-        + '<li>Disable browser security extensions temporarily and retry.</li>'
-        + '<li>If on a corporate network, check whether a proxy is interfering.</li>'
-        + '</ol>';
-    }
-  },
-
-  'REDIRECT_MISMATCH': {
-    type: 'err',
-    icon: '🔗',
-    title: 'Redirect URI mismatch — most common error',
-    body: function(r) {
-      var uri = getRedirectUri();
-      return '<p>Microsoft rejected the login because the Redirect URI registered in Azure does not exactly match the one this app is sending.</p>'
-        + '<p><strong>This app is using:</strong></p>'
-        + '<div class="copy-uri" onclick="copyToClipboard(\'' + uri + '\',this)">&#128203; <span class="uri-val">' + uri + '</span></div>'
-        + '<ol style="margin-top:10px">'
-        + '<li>Go to <strong>Azure Portal → App Registrations → your app → Authentication</strong>.</li>'
-        + '<li>Under <strong>Redirect URIs</strong>, add the URI above <strong>exactly</strong> — no trailing slash difference, no http vs https.</li>'
-        + '<li>Also add the version with a trailing slash just in case: <code>' + uri + '/</code></li>'
-        + '<li>Click <strong>Save</strong> and wait ~30 seconds before retrying.</li>'
-        + '</ol>'
-        + (r.raw ? '<p style="margin-top:8px;opacity:.7;font-size:11px">Raw error: <code>' + r.raw + '</code></p>' : '');
-    }
-  },
-
-  'INVALID_CLIENT': {
-    type: 'err',
-    icon: '🆔',
-    title: 'Invalid Client ID or Tenant ID',
-    body: function(r) {
-      return '<p>Microsoft could not find an application matching the Tenant ID and Client ID you entered.</p>'
-        + '<ol>'
-        + '<li>Double-check your <strong>Tenant ID</strong>: Azure Portal → Azure Active Directory → Overview → Tenant ID.</li>'
-        + '<li>Double-check your <strong>Client ID</strong>: App Registrations → your app → Application (client) ID.</li>'
-        + '<li>Make sure the app is registered in the <strong>same tenant</strong> you are logging into.</li>'
-        + '<li>If the app was recently created, wait a few minutes for Azure AD to propagate.</li>'
-        + '</ol>'
-        + (r.raw ? '<p style="margin-top:8px;opacity:.7;font-size:11px">Raw: <code>' + r.raw + '</code></p>' : '');
-    }
-  },
-
-  'CONSENT_REQUIRED': {
-    type: 'warn',
-    icon: '✋',
-    title: 'Admin consent required by your tenant',
-    body: function() {
-      return '<p>Your Azure AD tenant has disabled user consent. An administrator must grant the required permissions.</p>'
-        + '<ol>'
-        + '<li>Go to <strong>Azure Portal → App Registrations → your app → API Permissions</strong>.</li>'
-        + '<li>Ensure these delegated permissions are listed: <code>Mail.Read</code>, <code>Mail.ReadWrite</code>, <code>User.Read</code>.</li>'
-        + '<li>Click <strong>"Grant admin consent for [your tenant]"</strong> — you need a Global Admin to do this.</li>'
-        + '<li>Green checkmarks should appear next to each permission.</li>'
-        + '<li>Retry connecting after consent is granted.</li>'
-        + '</ol>';
-    }
-  },
-
-  'PUBLIC_CLIENT_REQUIRED': {
-    type: 'err',
-    icon: '⚙️',
-    title: 'Public client flows must be enabled',
-    body: function() {
-      return '<p>This app uses PKCE (no client secret) which requires the "Allow public client flows" setting to be enabled in Azure.</p>'
-        + '<ol>'
-        + '<li>Go to <strong>Azure Portal → App Registrations → your app → Authentication</strong>.</li>'
-        + '<li>Scroll to the bottom: <strong>Advanced settings</strong>.</li>'
-        + '<li>Set <strong>"Allow public client flows"</strong> to <strong>Yes</strong>.</li>'
-        + '<li>Click <strong>Save</strong> and retry.</li>'
-        + '</ol>';
-    }
-  },
-
-  'TOKEN_EXCHANGE_FAIL': {
-    type: 'err',
-    icon: '🔄',
-    title: 'Token exchange failed',
-    body: function(r) {
-      return '<p>Microsoft login succeeded but the follow-up token request was rejected (HTTP ' + (r.status||'?') + ').</p>'
-        + '<p>Server response: <code>' + (r.raw||'No details') + '</code></p>'
-        + '<ol>'
-        + '<li><strong>Redirect URI mismatch</strong> is the #1 cause — confirm the URI below is registered in Azure:<br>'
-        + '<div class="copy-uri" onclick="copyToClipboard(\'' + getRedirectUri() + '\',this)" style="margin-top:5px">&#128203; <span class="uri-val">' + getRedirectUri() + '</span></div></li>'
-        + '<li>Enable <strong>public client flows</strong> in Azure: Authentication → Allow public client flows → Yes.</li>'
-        + '<li>Make sure <code>Mail.Read</code> and <code>User.Read</code> permissions are granted with admin consent.</li>'
-        + '<li>If the error says <em>expired</em>, your authorization code timed out — the code is only valid for ~60 seconds. Try again quickly.</li>'
-        + '</ol>';
-    }
-  },
-
-  'SESSION_LOST': {
-    type: 'warn',
-    icon: '⏱️',
-    title: 'Session data was lost during redirect',
-    body: function() {
-      return '<p>FraudDesq stores the OAuth verifier in <code>sessionStorage</code> before redirecting to Microsoft. It was not found when you returned — the session was cleared during navigation.</p>'
-        + '<ol>'
-        + '<li>This often happens in <strong>Safari</strong> due to ITP (Intelligent Tracking Prevention) blocking cross-site storage. Try <strong>Chrome</strong> or <strong>Edge</strong>.</li>'
-        + '<li>Disable <strong>Private Browsing / Incognito</strong> mode — storage is often blocked in these modes.</li>'
-        + '<li>Check that browser extensions are not clearing storage between pages.</li>'
-        + '<li>Allow cookies/storage for this domain in your browser settings and try again.</li>'
-        + '</ol>';
-    }
-  },
-
-  'NETWORK_ERR': {
-    type: 'err',
-    icon: '🌐',
-    title: 'Network error — cannot reach Microsoft',
-    body: function() {
-      return '<p>The request to Microsoft\'s token endpoint failed due to a network error.</p>'
-        + '<ol>'
-        + '<li>Check your internet connection.</li>'
-        + '<li>If on a corporate network, a <strong>proxy or firewall</strong> may be blocking requests to <code>login.microsoftonline.com</code>. Contact your IT team.</li>'
-        + '<li>Disable any VPN temporarily and retry.</li>'
-        + '<li>Check <a class="fix-link" href="https://status.azure.com" target="_blank">Azure Status</a> for any ongoing outages.</li>'
-        + '</ol>';
-    }
-  },
-
-  'GRAPH_401': {
-    type: 'err',
-    icon: '🚫',
-    title: 'Access denied to mailbox (401 Unauthorised)',
-    body: function() {
-      return '<p>Authentication succeeded but Microsoft Graph rejected access to the mailbox. Your token does not have sufficient permission.</p>'
-        + '<ol>'
-        + '<li>Go to <strong>Azure Portal → App Registrations → your app → API Permissions</strong>.</li>'
-        + '<li>Confirm <code>Mail.Read</code> is listed as a <strong>delegated</strong> permission (not application).</li>'
-        + '<li>Click <strong>"Grant admin consent"</strong> if you have not done so already.</li>'
-        + '<li>If accessing a <strong>shared mailbox</strong>, the signed-in user must have <em>Full Access</em> permissions to that mailbox in Exchange Admin Center.</li>'
-        + '<li>Log out and reconnect to get a fresh token with updated permissions.</li>'
-        + '</ol>';
-    }
-  },
-
-  'OAUTH_GENERIC': {
-    type: 'err',
-    icon: '❌',
-    title: 'Microsoft returned an OAuth error',
-    body: function(r) {
-      return '<p>Microsoft returned an error during the login flow.</p>'
-        + '<p><strong>Error:</strong> <code>' + (r.code||'unknown') + '</code></p>'
-        + '<p><strong>Description:</strong> <code>' + (r.desc||'No description provided') + '</code></p>'
-        + '<ol>'
-        + '<li>Check the error code against the <a class="fix-link" href="https://learn.microsoft.com/en-us/azure/active-directory/develop/reference-aadsts-error-codes" target="_blank">Microsoft AADSTS error codes reference</a>.</li>'
-        + '<li>Common codes: <code>AADSTS50011</code> = redirect URI mismatch · <code>AADSTS700016</code> = app not found · <code>AADSTS65001</code> = consent required.</li>'
-        + '<li>Verify your Tenant ID, Client ID, and Redirect URI are all correct.</li>'
-        + '</ol>';
-    }
-  },
-
-  'SUCCESS_TOKEN': {
-    type: 'ok',
-    icon: '✅',
-    title: 'Signed in — exchanging token',
-    body: function() {
-      return '<p>Microsoft login was successful. Exchanging the authorisation code for an access token...</p>'
-        + '<p>If this does not progress within 10 seconds, check your network connection and try again.</p>';
-    }
-  }
-
 };
 
-// ── Guide renderer ────────────────────────────────────
-var msgExpanded = false;
+const loginRequest = {
+    scopes: ["User.Read", "Mail.Read"]
+};
 
-function showGuide(code, extra) {
-  extra = extra || {};
-  var guide = GUIDES[code];
-  if (!guide) {
-    // Generic fallback
-    guide = { type:'err', icon:'❌', title:'Authentication error', body: function(r){ return '<p>' + (r.msg||'An unknown error occurred. Please try again.') + '</p>'; } };
-  }
-  var box = document.getElementById('msgBox');
-  box.className = 'msg-box type-' + guide.type + ' show';
-  document.getElementById('msgIcon').textContent = guide.icon;
-  document.getElementById('msgTitle').textContent = guide.title;
-  document.getElementById('msgBody').innerHTML = guide.body(extra);
+const msalInstance = new msal.PublicClientApplication(msalConfig);
 
-  // Auto-expand the body
-  document.getElementById('msgBody').classList.add('open');
-  document.getElementById('msgChevron').classList.add('open');
-  msgExpanded = true;
 
-  // Highlight relevant input fields
-  clearFieldErrors();
-  if (code === 'EMPTY_MB' || code === 'BAD_MB_FORMAT') markField('inpMb');
-  if (code === 'BAD_TID' || code === 'INVALID_CLIENT') markField('inpTid');
-  if (code === 'BAD_CID' || code === 'INVALID_CLIENT') markField('inpCid');
+// ================= LOGIN =================
+document.getElementById("loginBtn").addEventListener("click", () => {
+    msalInstance.loginRedirect(loginRequest);
+});
+
+
+// ================= HANDLE REDIRECT =================
+msalInstance.handleRedirectPromise()
+.then(async response => {
+
+    let account = null;
+
+    if (response) {
+        account = response.account;
+        msalInstance.setActiveAccount(account);
+    } else {
+        account = msalInstance.getActiveAccount();
+    }
+
+    if (account) {
+        showDashboard(account);
+        await loadEmails();
+    }
+
+}).catch(err => {
+    console.error("AUTH ERROR", err);
+});
+
+
+// ================= UI =================
+function showDashboard(account) {
+    document.getElementById("overlay").classList.add("hidden");
+    document.getElementById("app").classList.remove("hidden");
+    document.getElementById("mailbox").innerText = sharedMailbox;
 }
 
-function toggleMsg() {
-  msgExpanded = !msgExpanded;
-  document.getElementById('msgBody').classList.toggle('open', msgExpanded);
-  document.getElementById('msgChevron').classList.toggle('open', msgExpanded);
+
+// ================= GRAPH =================
+async function getToken() {
+
+    const request = {
+        scopes: ["User.Read", "Mail.Read"],
+        account: msalInstance.getActiveAccount()
+    };
+
+    const response = await msalInstance.acquireTokenSilent(request);
+    return response.accessToken;
 }
 
-function clearMsg() {
-  document.getElementById('msgBox').className = 'msg-box';
-  clearFieldErrors();
-  msgExpanded = false;
+
+// ================= LOAD SHARED MAILBOX =================
+async function loadEmails() {
+
+    try {
+
+        const token = await getToken();
+
+        const endpoint = `https://graph.microsoft.com/v1.0/users/${sharedMailbox}/messages?$top=20&$orderby=receivedDateTime desc`;
+
+        const res = await fetch(endpoint, {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
+
+        if (!res.ok) {
+            throw new Error("Graph failed: " + res.status);
+        }
+
+        const data = await res.json();
+
+        renderCases(data.value);
+
+    } catch (err) {
+        console.error("GRAPH ERROR", err);
+        alert("Unable to access shared mailbox. Ensure you have Full Access.");
+    }
 }
 
-function markField(id) {
-  var el = document.getElementById(id);
-  if (el) el.classList.add('err-field');
-}
 
-function clearFieldErrors() {
-  ['inpMb','inpTid','inpCid'].forEach(function(id){
-    var el = document.getElementById(id);
-    if (el) el.classList.remove('err-field');
-  });
-}
+// ================= RENDER =================
+function renderCases(messages) {
 
-// ── Copy helpers ──────────────────────────────────────
-function copyToClipboard(text, el) {
-  navigator.clipboard.writeText(text).then(function(){
-    var orig = el.innerHTML;
-    el.innerHTML = '&#10003; Copied!';
-    el.style.color = 'var(--green)';
-    setTimeout(function(){ el.innerHTML = orig; el.style.color = ''; }, 1800);
-  }).catch(function(){
-    var ta = document.createElement('textarea');
-    ta.value = text; document.body.appendChild(ta); ta.select();
-    try { document.execCommand('copy'); } catch(e){}
-    document.body.removeChild(ta);
-  });
-}
+    const table = document.getElementById("cases");
+    table.innerHTML = "";
 
-function copyRedirUri() {
-  var uri = getRedirectUri();
-  var btn = document.getElementById('redirCopyBtn');
-  copyToClipboard(uri, btn);
-  btn.textContent = '✓ Copied';
-  btn.classList.add('copied');
-  setTimeout(function(){ btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
-}
+    messages.forEach((mail, i) => {
 
-// ═══════════════════════════════════════════════════════
-// CLASSIFICATION ENGINE
-// ═══════════════════════════════════════════════════════
-var FRAUD_RULES = [
-  { re:/sim.?swap|sim.?port|number.?port|porting.?fraud/i,     type:'SIM Swap Fraud',         basePri:40 },
-  { re:/bec|business.?email.?comprom|ceo.?fraud|wire.?fraud/i,  type:'BEC / CEO Fraud',        basePri:45 },
-  { re:/unauthori[sz]ed.?transfer|fraudulent.?transfer/i,       type:'Unauthorized Transfer',  basePri:42 },
-  { re:/phish|vish|smish|spoof|fake.?(?:email|site|portal)/i,   type:'Phishing',               basePri:30 },
-  { re:/identity.?theft|id.?fraud|impersonat|fake.?id|forged/i, type:'Identity Theft',         basePri:30 },
-  { re:/atm.?skim|card.?skim|pos.?tamper|skimm/i,              type:'ATM / Card Skimming',    basePri:32 },
-  { re:/card.?not.?present|cnp.?fraud|online.?card/i,           type:'CNP Card Fraud',         basePri:28 },
-  { re:/card.?fraud|stolen.?card|cloned.?card/i,                type:'Card Fraud',             basePri:25 },
-  { re:/insider|staff.?fraud|employee.?fraud|rogue.?staff/i,    type:'Insider Threat',         basePri:45 },
-  { re:/money.?launder|structur|smurfing|layering/i,            type:'Money Laundering',       basePri:22 },
-  { re:/ofac|sanction|sdn.?list|swift.?screen/i,                type:'Sanctions Violation',    basePri:38 },
-  { re:/invest.?scam|ponzi|pyramid|crypto.?scam|forex.?scam/i,  type:'Investment Scam',        basePri:20 },
-  { re:/account.?takeover|ato|unauthorized.?login/i,            type:'Account Takeover',       basePri:28 },
-  { re:/deepfake|synthetic.?identity|biometric.?bypass/i,       type:'Synthetic Identity',     basePri:35 },
-  { re:/ransomware|malware|cyber/i,                              type:'Cyber Fraud',            basePri:33 },
-];
-function detectFraudType(text) {
-  for (var i=0;i<FRAUD_RULES.length;i++) { if(FRAUD_RULES[i].re.test(text)) return FRAUD_RULES[i]; }
-  return { type:'Unclassified', basePri:10 };
-}
-var STATUS_RULES = [
-  { status:'closed',      patterns:[/\b(resolved|closed|completed|finalised|finalized|no.?further.?action|case.?closed|concluded|settled|remediated|recovered|refunded|reversed|false.?alarm|not.?fraud|legitimate|cleared|dismissed|withdrawn)\b/i] },
-  { status:'escalated',   patterns:[/\b(escalat|urgent|immediate|critical.?alert|emergency|refer.?to.?(?:efcc|cbn|police|legal)|cbn.?reportable|str.?filing|law.?enforcement|regulatory.?breach|mandatory.?report)\b/i] },
-  { status:'in-progress', patterns:[/\b(investigating|under.?review|being.?handled|in.?progress|action.?taken|freeze.?placed|account.?frozen|hold.?placed|monitoring|tracing|traced|blocked|suspended|pending.?verification|follow.?up|following.?up|contacted|notified|informed|reported.?to|flagged.?to|working.?with)\b/i] },
-  { status:'pending',     patterns:[/\b(awaiting|pending|please.?(?:advise|confirm|review|investigate|check)|requires.?action|needs.?attention|kindly|request.?you.?to|fyi|for.?your.?information)\b/i] },
-];
-function detectStatus(text) {
-  for (var i=0;i<STATUS_RULES.length;i++) { for(var j=0;j<STATUS_RULES[i].patterns.length;j++) { if(STATUS_RULES[i].patterns[j].test(text)) return STATUS_RULES[i].status; } }
-  return 'open';
-}
-function scoreSignals(fraudRule,amounts,subject,body,senderAddr){
-  var ft=subject+' '+body, totalAmt=amounts.reduce(function(s,v){return s+v;},0);
-  var sigA=fraudRule.basePri||10;
-  var sigB=totalAmt>=100000000?25:totalAmt>=50000000?20:totalAmt>=10000000?16:totalAmt>=5000000?12:totalAmt>=1000000?8:totalAmt>=100000?4:totalAmt>0?2:0;
-  var sigC=/\b(critical|urgent|immediate|emergency|high.?priority)\b/i.test(subject)?15:/\b(alert|warning|attention|asap|important)\b/i.test(subject)?8:/\b(re:|fw:|fwd:)/i.test(subject)?3:0;
-  var domain=(senderAddr||'').split('@')[1]||'';
-  var sigD=/fidelitybank\.(com|ng)/i.test(domain)?8:/\.(bank|finance|gov|ng)\b/i.test(domain)?6:/gmail|yahoo|hotmail|outlook\.com/i.test(domain)?3:domain?5:0;
-  var vm=ft.match(/(\d[\d,]*)\s*(customer|account|card|victim|user|client)/i), sigE=0;
-  if(vm){var v=parseInt(vm[1].replace(/,/g,''));sigE=v>=100?5:v>=20?4:v>=5?3:1;}
-  var sigF=/\b(efcc|cbn|nfiu|str|sar|mandatory.?report|law.?enforcement|ofac|sanction)\b/i.test(ft)?7:/\b(compliance|aml|kyc|report.?required)\b/i.test(ft)?4:0;
-  var total=Math.min(100,sigA+sigB+sigC+sigD+sigE+sigF);
-  return { score:total, label:total>=75?'critical':total>=55?'high':total>=35?'medium':'low',
-    breakdown:{'Fraud type':{pts:sigA,max:45,color:'#4f8ef7'},'Amount size':{pts:sigB,max:25,color:'#2dd4bf'},'Urgency signal':{pts:sigC,max:15,color:'#f97316'},'Sender trust':{pts:sigD,max:8,color:'#22c55e'},'Victim count':{pts:sigE,max:5,color:'#a78bfa'},'Regulatory flag':{pts:sigF,max:7,color:'#ef4444'}} };
-}
-var WORD_AMOUNTS=[[/\bone\s+hundred\s+million/i,100000000],[/\bfifty\s+million/i,50000000],[/\btwenty.?five?\s+million/i,25000000],[/\bten\s+million/i,10000000],[/\bfive\s+million/i,5000000],[/\bthree\s+million/i,3000000],[/\btwo\s+million/i,2000000],[/\bone\s+million/i,1000000],[/\bfive\s+hundred\s+thousand/i,500000],[/\bone\s+hundred\s+thousand/i,100000],[/\bfifty\s+thousand/i,50000]];
-function extractAmounts(text){
-  var found=[],m;
-  var re1=/(?:&#8358;|NGN|N)\s?([\d,]+(?:\.\d{1,2})?)\s*([MKB]?)/gi;
-  while((m=re1.exec(text))!==null){var n=parseFloat(m[1].replace(/,/g,''));if(m[2]==='M'||m[2]==='m')n*=1000000;else if(m[2]==='K'||m[2]==='k')n*=1000;else if(m[2]==='B'||m[2]==='b')n*=1000000000;if(n>0)found.push(Math.round(n));}
-  var re2=/([\d,]+(?:\.\d{1,2})?)\s*naira/gi;
-  while((m=re2.exec(text))!==null){var n2=parseFloat(m[1].replace(/,/g,''));if(n2>0)found.push(Math.round(n2));}
-  for(var i=0;i<WORD_AMOUNTS.length;i++){if(WORD_AMOUNTS[i][0].test(text))found.push(WORD_AMOUNTS[i][1]);}
-  found=found.filter(function(v,i,a){return a.indexOf(v)===i;});
-  found.sort(function(a,b){return b-a;});
-  return found;
-}
-function isInternalSender(addr){return /fidelitybank\.(com|ng)/i.test(addr||'');}
-function senderDomain(addr){return (addr||'').split('@')[1]||'unknown';}
-var caseSeq=0;
-function classifyEmail(email){
-  caseSeq++;
-  var subject=email.subject||'', body=email.body||email.bodyPreview||'', from=(email.from&&email.from.emailAddress&&email.from.emailAddress.address)||'';
-  var ft=subject+' '+body, fraudRule=detectFraudType(ft), amounts=extractAmounts(ft), totalAmt=amounts.reduce(function(s,v){return s+v;},0);
-  var scored=scoreSignals(fraudRule,amounts,subject,body,from), status=detectStatus(ft);
-  var dt=new Date(email.receivedDateTime||Date.now()), yr=dt.getFullYear();
-  return {id:'FRD-'+yr+'-'+String(caseSeq).padStart(3,'0'),title:subject||'Fraud Report #'+caseSeq,fraudType:fraudRule.type,priority:scored.label,score:scored.score,scoreBreak:scored.breakdown,status:status,statusSource:'keyword',date:dt.toLocaleString('en-GB',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}),rawDate:dt,amounts:amounts,amount:totalAmt,emailSubject:subject,emailBody:body,emailFrom:from,senderDomain:senderDomain(from),isInternal:isInternalSender(from),graphId:email.id||''};
-}
+        const row = `
+        <tr>
+            <td>FRD-${new Date().getFullYear()}-${1000+i}</td>
+            <td>${mail.subject || "No subject"}</td>
+            <td>${mail.from?.emailAddress?.address || "Unknown"}</td>
+            <td>${new Date(mail.receivedDateTime).toLocaleString()}</td>
+        </tr>`;
 
-// ═══════════════════════════════════════════════════════
-// STATE
-// ═══════════════════════════════════════════════════════
-var allCases=[],filtered=[],activeTab='all';
-var sortF='date',sortD=-1,selId=null;
-var curPg=1,pgSz=50,totPg=1;
-var expFmt='csv',caseManualNum=0;
-var mbAddr='',tokenVal=null;
-
-// ── Clock ─────────────────────────────────────────────
-function tick(){var n=new Date();document.getElementById('clockEl').textContent=n.toLocaleDateString('en-GB',{weekday:'short',day:'2-digit',month:'short',year:'numeric'})+' '+n.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});}
-setInterval(tick,1000); tick();
-
-// ── Redirect URI helpers ──────────────────────────────
-function getRedirectUri(){return (window.location.origin+window.location.pathname).replace(/\/$/,'');}
-(function(){
-  var uri=getRedirectUri();
-  var el=document.getElementById('redirVal');
-  if(el) el.textContent=uri;
-})();
-
-// ═══════════════════════════════════════════════════════
-// AUTH
-// ═══════════════════════════════════════════════════════
-function makeVerifier(){var a=new Uint8Array(32);crypto.getRandomValues(a);return btoa(String.fromCharCode.apply(null,a)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');}
-function makeChallenge(v){return crypto.subtle.digest('SHA-256',new TextEncoder().encode(v)).then(function(b){return btoa(String.fromCharCode.apply(null,new Uint8Array(b))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');});}
-
-function setBtnLoading(msg){
-  var btn=document.getElementById('authBtn');
-  btn.disabled=true;
-  btn.innerHTML='<span style="display:inline-block;width:13px;height:13px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite"></span>&nbsp;'+msg;
-}
-function resetBtn(){
-  var btn=document.getElementById('authBtn');
-  btn.disabled=false;
-  btn.innerHTML='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="2" y="2" width="9" height="9" rx="1.5"/><rect x="13" y="2" width="9" height="9" rx="1.5"/><rect x="2" y="13" width="9" height="9" rx="1.5"/><rect x="13" y="13" width="9" height="9" rx="1.5"/></svg> Connect via Microsoft OAuth';
-}
-
-function doConnect(){
-  clearMsg();
-  var mb=document.getElementById('inpMb').value.trim();
-  var tid=document.getElementById('inpTid').value.trim();
-  var cid=document.getElementById('inpCid').value.trim();
-  var guidRe=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-  // ── Pre-flight validation with specific guides ───────
-  if(!mb){ showGuide('EMPTY_MB'); return; }
-  if(!tid){ showGuide('BAD_TID'); return; }
-  if(!guidRe.test(tid)){ showGuide('BAD_TID'); return; }
-  if(!cid){ showGuide('BAD_CID'); return; }
-  if(!guidRe.test(cid)){ showGuide('BAD_CID'); return; }
-  if(window.location.protocol!=='https:'&&window.location.hostname!=='localhost'&&window.location.hostname!=='127.0.0.1'){ showGuide('NO_HTTPS',{protocol:window.location.protocol}); return; }
-  if(!window.crypto||!window.crypto.subtle){ showGuide('NO_CRYPTO'); return; }
-
-  // ── Attempt storage write ────────────────────────────
-  try{ sessionStorage.setItem('fd_test','1'); sessionStorage.removeItem('fd_test'); }
-  catch(e){ showGuide('NO_STORAGE'); return; }
-
-  mbAddr=mb;
-  setBtnLoading('Generating secure challenge...');
-  var verifier=makeVerifier();
-
-  makeChallenge(verifier)
-    .then(function(challenge){
-      try{
-        sessionStorage.setItem('fd_v',verifier);
-        sessionStorage.setItem('fd_t',tid);
-        sessionStorage.setItem('fd_c',cid);
-        sessionStorage.setItem('fd_m',mb);
-      }catch(e){ showGuide('NO_STORAGE'); resetBtn(); return; }
-
-      var scope='https://graph.microsoft.com/Mail.Read https://graph.microsoft.com/Mail.ReadWrite https://graph.microsoft.com/User.Read offline_access';
-      var params=[
-        'client_id='+encodeURIComponent(cid),
-        'response_type=code',
-        'redirect_uri='+encodeURIComponent(getRedirectUri()),
-        'response_mode=query',
-        'scope='+encodeURIComponent(scope),
-        'code_challenge='+challenge,
-        'code_challenge_method=S256',
-        'state=fd_oauth_v4',
-        'prompt=select_account'
-      ].join('&');
-
-      setBtnLoading('Redirecting to Microsoft...');
-      setTimeout(function(){ window.location.href='https://login.microsoftonline.com/'+encodeURIComponent(tid)+'/oauth2/v2.0/authorize?'+params; },400);
-    })
-    .catch(function(err){
-      showGuide('CRYPTO_FAIL',{msg:err.message||String(err)});
-      resetBtn();
+        table.insertAdjacentHTML("beforeend", row);
     });
 }
 
-// ── OAuth callback ────────────────────────────────────
-function handleCallback(){
-  var params=new URLSearchParams(window.location.search);
-  if(params.get('state')!=='fd_oauth_v4') return false;
-
-  // Microsoft returned an error
-  var oauthErr=params.get('error');
-  if(oauthErr){
-    window.history.replaceState({},document.title,window.location.pathname);
-    document.getElementById('authWrap').classList.remove('gone');
-    var desc=decodeURIComponent((params.get('error_description')||'').replace(/\+/g,' '));
-
-    // Map specific AADSTS codes to targeted guides
-    if(/AADSTS50011|redirect/i.test(desc)||oauthErr==='invalid_request'){
-      showGuide('REDIRECT_MISMATCH',{raw:desc});
-    } else if(/AADSTS700016|application.*not found|AADSTS90002/i.test(desc)){
-      showGuide('INVALID_CLIENT',{raw:desc});
-    } else if(/AADSTS65001|consent/i.test(desc)){
-      showGuide('CONSENT_REQUIRED');
-    } else if(/AADSTS7000218|public.*client/i.test(desc)){
-      showGuide('PUBLIC_CLIENT_REQUIRED');
-    } else {
-      showGuide('OAUTH_GENERIC',{code:oauthErr,desc:desc});
-    }
-    return true;
-  }
-
-  var code=params.get('code');
-  if(!code) return false;
-
-  var tid,cid,verifier,mb;
-  try{tid=sessionStorage.getItem('fd_t');cid=sessionStorage.getItem('fd_c');verifier=sessionStorage.getItem('fd_v');mb=sessionStorage.getItem('fd_m');}catch(e){}
-
-  window.history.replaceState({},document.title,window.location.pathname);
-  document.getElementById('authWrap').classList.remove('gone');
-
-  if(!tid||!cid||!verifier){
-    showGuide('SESSION_LOST');
-    return true;
-  }
-
-  mbAddr=mb||'';
-  showGuide('SUCCESS_TOKEN');
-  setBtnLoading('Exchanging token...');
-
-  var xhr=new XMLHttpRequest();
-  xhr.open('POST','https://login.microsoftonline.com/'+encodeURIComponent(tid)+'/oauth2/v2.0/token',true);
-  xhr.setRequestHeader('Content-Type','application/x-www-form-urlencoded');
-  xhr.onload=function(){
-    if(xhr.status===200){
-      var data;
-      try{data=JSON.parse(xhr.responseText);}catch(e){showGuide('TOKEN_EXCHANGE_FAIL',{status:xhr.status,raw:'Invalid JSON response'});resetBtn();return;}
-      if(!data.access_token){showGuide('TOKEN_EXCHANGE_FAIL',{status:xhr.status,raw:data.error_description||data.error||'No access_token in response'});resetBtn();return;}
-      tokenVal=data.access_token;
-      try{sessionStorage.setItem('fd_tok',tokenVal);sessionStorage.setItem('fd_mb_saved',mbAddr);}catch(e){}
-      clearMsg();
-      document.getElementById('authWrap').classList.add('gone');
-      setConnected(); fetchAllEmails();
-    } else {
-      var errData; try{errData=JSON.parse(xhr.responseText);}catch(e){errData={};}
-      var raw=errData.error_description||errData.error||('HTTP '+xhr.status);
-      // Map token errors to specific guides
-      if(/redirect_uri/i.test(raw)){ showGuide('REDIRECT_MISMATCH',{raw:raw}); }
-      else if(/public.*client|AADSTS7000218/i.test(raw)){ showGuide('PUBLIC_CLIENT_REQUIRED'); }
-      else if(/consent|AADSTS65001/i.test(raw)){ showGuide('CONSENT_REQUIRED'); }
-      else { showGuide('TOKEN_EXCHANGE_FAIL',{status:xhr.status,raw:raw}); }
-      resetBtn();
-    }
-  };
-  xhr.onerror=function(){ showGuide('NETWORK_ERR'); resetBtn(); };
-  var body=['client_id='+encodeURIComponent(cid),'grant_type=authorization_code','code='+encodeURIComponent(code),'redirect_uri='+encodeURIComponent(getRedirectUri()),'code_verifier='+encodeURIComponent(verifier)].join('&');
-  xhr.send(body);
-  return true;
-}
-
-function setConnected(){
-  document.getElementById('connBadge').style.display='inline-flex';
-  document.getElementById('mbPill').style.display='inline-block';
-  document.getElementById('mbPill').textContent=mbAddr;
-}
-
-// ═══════════════════════════════════════════════════════
-// GRAPH API
-// ═══════════════════════════════════════════════════════
-function fetchAllEmails(){
-  showLoading('Fetching emails from '+mbAddr+'...');
-  allCases=[];
-  var maxPages=10,pageNum=0;
-  var baseUrl='https://graph.microsoft.com/v1.0/users/'+encodeURIComponent(mbAddr)+'/mailFolders/Inbox/messages?$top=999&$orderby=receivedDateTime%20desc&$select=id,subject,from,body,bodyPreview,receivedDateTime,isRead,importance,hasAttachments';
-  function fetchPage(url){
-    pageNum++;
-    if(pageNum>maxPages){finishFetch();return;}
-    var xhr=new XMLHttpRequest();
-    xhr.open('GET',url,true);
-    xhr.setRequestHeader('Authorization','Bearer '+tokenVal);
-    xhr.setRequestHeader('Prefer','outlook.body-content-type="text"');
-    xhr.onload=function(){
-      if(xhr.status===200){
-        var data;try{data=JSON.parse(xhr.responseText);}catch(e){finishFetch();return;}
-        var msgs=data.value||[];
-        for(var i=0;i<msgs.length;i++){var bc=(msgs[i].body&&msgs[i].body.content)||msgs[i].bodyPreview||'';msgs[i].body=bc;allCases.push(classifyEmail(msgs[i]));}
-        showLoading('Classified '+allCases.length+' cases...');
-        var nxt=data['@odata.nextLink'];
-        if(nxt){setTimeout(function(){fetchPage(nxt);},300);}else{finishFetch();}
-      } else if(xhr.status===401){
-        try{sessionStorage.removeItem('fd_tok');}catch(e){}
-        tokenVal=null;
-        document.getElementById('authWrap').classList.remove('gone');
-        showGuide('GRAPH_401');
-      } else { finishFetch(); }
-    };
-    xhr.onerror=function(){showGuide('NETWORK_ERR');document.getElementById('authWrap').classList.remove('gone');};
-    xhr.send();
-  }
-  fetchPage(baseUrl);
-}
-
-function showLoading(msg){document.getElementById('tBody').innerHTML='<tr><td colspan="8" style="text-align:center;padding:48px;color:var(--t2)"><span style="display:inline-block;width:13px;height:13px;border:2px solid var(--border-b);border-top-color:var(--blue);border-radius:50%;animation:spin .7s linear infinite;margin-right:8px;vertical-align:middle"></span>'+msg+'</td></tr>';}
-function finishFetch(){setConnected();renderAll();}
-function doSync(){var ico=document.getElementById('syncIco');ico.style.animation='spin .7s linear infinite';if(tokenVal){allCases=[];caseSeq=0;fetchAllEmails();}setTimeout(function(){ico.style.animation='';},1500);}
-
-// ═══════════════════════════════════════════════════════
-// DEMO MODE
-// ═══════════════════════════════════════════════════════
-var DEMO_EMAILS=[
-  {id:'e001',subject:'CRITICAL: SIM Swap Detected - Account xxxx7823',from:{emailAddress:{address:'mobile.alerts@fidelitybank.com'}},receivedDateTime:'2026-02-26T09:14:00Z',body:'Customer Adunola Eze reports SIM ported without consent. Three OTP-authenticated transfers of N2,500,000, N3,000,000 and N2,950,000 made to unknown beneficiaries. Requires immediate action.'},
-  {id:'e002',subject:'URGENT: CEO Fraud - Approved Wire N125,000,000 instruction',from:{emailAddress:{address:'treasury@fidelitybank.com'}},receivedDateTime:'2026-02-26T08:51:00Z',body:'Treasury manager flags email purportedly from CEO requesting urgent N125,000,000 wire to new vendor. Email headers show external origin. BEC suspected. Wire held pending investigation. Please escalate to IT Security and Legal.'},
-  {id:'e003',subject:'RE: Phishing site live - 340 customers affected fidelitybank-secure.com',from:{emailAddress:{address:'it.security@fidelitybank.com'}},receivedDateTime:'2026-02-26T07:30:00Z',body:'Active phishing portal at fidelitybank-secure-login.com harvesting credentials. Approximately 340 customers credentials potentially captured. Takedown request submitted. Action being taken.'},
-  {id:'e004',subject:'ATM Skimming Alert - 6 terminals compromised Lekki Phase 1',from:{emailAddress:{address:'atm.operations@fidelitybank.com'}},receivedDateTime:'2026-02-25T22:18:00Z',body:'Physical inspection reveals skimming overlays on 6 ATMs across Lekki Phase 1 and Victoria Island. 89 customer cards confirmed compromised. Unauthorized withdrawals of approximately N18,750,000 recorded. Cards being blocked.'},
-  {id:'e005',subject:'Account Takeover Alert - forged NIN documents VI Branch',from:{emailAddress:{address:'vi.branch@fidelitybank.com'}},receivedDateTime:'2026-02-25T18:44:00Z',body:'Branch staff intercepted individual with forged NIN documentation attempting to claim account xxxx0934. Three prior unauthorized transfers totalling N11,200,000 already processed. Customer notified. Case requires escalation.'},
-  {id:'e006',subject:'INSIDER THREAT DETECTED - Employee ID 8841 accessed 512 accounts after hours',from:{emailAddress:{address:'it.security@fidelitybank.com'}},receivedDateTime:'2026-02-25T15:30:00Z',body:'SIEM alert: privileged employee accessed 512 customer accounts between 23:14 and 02:58 from unregistered IP. HR and Legal notified. Access revoked. Please refer to EFCC. Do not alert employee until evidence secured.'},
-  {id:'e007',subject:'AML Alert - Structuring pattern N312,000,000 across 18 accounts',from:{emailAddress:{address:'compliance@fidelitybank.com'}},receivedDateTime:'2026-02-25T12:00:00Z',body:'Transaction monitoring flags 18 linked accounts receiving coordinated cash deposits totalling N312,000,000. Pattern consistent with smurfing/structuring. STR filing mandatory. NFIU notification required.'},
-  {id:'e008',subject:'Investment Fraud - 23 customers defrauded N47,500,000',from:{emailAddress:{address:'customer.care@fidelitybank.com'}},receivedDateTime:'2026-02-25T09:22:00Z',body:'23 customers report transfers to entity offering 40% monthly crypto investment returns. Individual amounts range from N500,000 to N8,000,000. Entity account opened 3 weeks ago. Awaiting your review.'},
-  {id:'e009',subject:'CNP Card Fraud - 47 cards compromised N9,870,000 unauthorised transactions',from:{emailAddress:{address:'card.operations@fidelitybank.com'}},receivedDateTime:'2026-02-24T21:05:00Z',body:'47 Fidelity debit cards used for international card-not-present transactions from IP ranges in Eastern Europe. Transactions range from N200,000 to N1,800,000. Cards blocked. Replacement in progress.'},
-  {id:'e010',subject:'SIM Swap Cluster - 3 cases Apapa Branch area 48 hours',from:{emailAddress:{address:'fraud.ops@fidelitybank.com'}},receivedDateTime:'2026-02-24T16:30:00Z',body:'Three SIM swap cases from customers linked to same Apapa telco outlet within 48 hours. Total exposure N6,750,000. Suspected telco insider facilitating fraudulent ports. Please advise on escalation path.'},
-  {id:'e011',subject:'Synthetic identity fraud - deepfake biometric bypass KYC 8 accounts',from:{emailAddress:{address:'kyc@fidelitybank.com'}},receivedDateTime:'2026-02-24T11:15:00Z',body:'KYC audit identifies 8 accounts opened using synthetic identities: real NIN numbers combined with deepfake facial biometrics. Accounts received aggregate N2,100,000 before freeze. CBN notification under review.'},
-  {id:'e012',subject:'FW: OFAC Sanctions match - cross-border payment N85,000,000 held',from:{emailAddress:{address:'trade.finance@fidelitybank.com'}},receivedDateTime:'2026-02-23T14:00:00Z',body:'SWIFT screening match against OFAC SDN list for cross-border payment of N85,000,000. Transaction held. CBN and correspondent bank notified. SAR filed. Case resolved pending regulatory confirmation.'},
-  {id:'e013',subject:'Phishing SMS campaign - 200 customers received smishing message',from:{emailAddress:{address:'branch.surulere@fidelitybank.com'}},receivedDateTime:'2026-02-23T10:00:00Z',body:'Multiple customers report SMS messages impersonating Fidelity Bank requesting OTP verification. Approx 200 customers targeted. No confirmed credential theft yet. Monitoring customer accounts. Fyi for awareness.'},
-];
-function runDemo(){
-  document.getElementById('authWrap').classList.add('gone');
-  mbAddr='fraud@fidelitybank.com (DEMO)';
-  allCases=[];caseSeq=0;
-  for(var i=0;i<DEMO_EMAILS.length;i++) allCases.push(classifyEmail(DEMO_EMAILS[i]));
-  var b=document.getElementById('connBadge');
-  b.style.cssText='background:rgba(167,139,250,.1);border:1px solid rgba(167,139,250,.28);color:#a78bfa;font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;display:inline-flex;align-items:center;gap:5px';
-  b.textContent='Demo Mode';
-  document.getElementById('mbPill').style.display='inline-block';
-  document.getElementById('mbPill').textContent=mbAddr;
-  renderAll();
-}
-
-// ═══════════════════════════════════════════════════════
-// RENDER
-// ═══════════════════════════════════════════════════════
-function renderAll(){updateStats();buildTypeFilter();doFilter();}
-function updateStats(){
-  var o=0,p=0,e=0,cl=0,exp=0;
-  for(var i=0;i<allCases.length;i++){var c=allCases[i];if(c.status==='open')o++;else if(c.status==='in-progress')p++;else if(c.status==='escalated')e++;else if(c.status==='closed')cl++;exp+=(c.amount||0);}
-  setV('sTotal',allCases.length);setV('sOpen',o);setV('sProg',p);setV('sEsc',e);setV('sClosed',cl);
-  document.getElementById('sExp').innerHTML='&#8358;'+fmtS(exp);
-  document.getElementById('sTotalN').textContent='\u2191 '+allCases.length+' cases classified';
-  document.getElementById('sEscN').textContent=e>0?'\u25b2 '+e+' need escalation':'\u2713 None critical';
-  ['tAll','tOpen','tProg','tEsc','tClosed'].forEach(function(id,i){setV(id,[allCases.length,o,p,e,cl][i]);});
-}
-function setV(id,v){document.getElementById(id).textContent=v;}
-function fmtS(n){if(n>=1e9)return(n/1e9).toFixed(1)+'B';if(n>=1e6)return(n/1e6).toFixed(1)+'M';if(n>=1e3)return(n/1e3).toFixed(0)+'K';return n.toLocaleString();}
-function buildTypeFilter(){
-  var sel=document.getElementById('fType'),seen={};
-  sel.innerHTML='<option value="">All Fraud Types</option>';
-  for(var i=0;i<allCases.length;i++){var t=allCases[i].fraudType||'Unclassified';if(!seen[t]){seen[t]=1;sel.innerHTML+='<option value="'+esc(t)+'">'+esc(t)+'</option>';}}
-}
-function doFilter(){
-  var q=document.getElementById('srchInp').value.toLowerCase(), fs=document.getElementById('fStat').value, fp=document.getElementById('fPri').value, ft=document.getElementById('fType').value;
-  filtered=[];
-  for(var i=0;i<allCases.length;i++){var c=allCases[i];if(activeTab!=='all'&&c.status!==activeTab)continue;if(fs&&c.status!==fs)continue;if(fp&&c.priority!==fp)continue;if(ft&&c.fraudType!==ft)continue;if(q&&!((c.id+c.title+c.status+c.fraudType).toLowerCase().includes(q)))continue;filtered.push(c);}
-  sortData();curPg=1;drawPage();
-}
-function sortData(){
-  var pMap={critical:4,high:3,medium:2,low:1};
-  filtered.sort(function(a,b){
-    var va,vb;
-    if(sortF==='date'){va=a.rawDate;vb=b.rawDate;}else if(sortF==='amount'){va=a.amount||0;vb=b.amount||0;}else if(sortF==='priority'){va=pMap[a.priority]||0;vb=pMap[b.priority]||0;}else if(sortF==='score'){va=a.score||0;vb=b.score||0;}else{va=(a[sortF]||'').toString().toLowerCase();vb=(b[sortF]||'').toString().toLowerCase();}
-    if(va<vb)return sortD;if(va>vb)return -sortD;return 0;
-  });
-}
-function drawPage(){
-  totPg=Math.max(1,Math.ceil(filtered.length/pgSz));curPg=Math.min(curPg,totPg);
-  var s=(curPg-1)*pgSz,e2=Math.min(s+pgSz,filtered.length),slice=filtered.slice(s,e2),tb=document.getElementById('tBody');
-  if(!slice.length){tb.innerHTML='<tr><td colspan="8"><div class="empty"><div style="font-size:36px;opacity:.2;margin-bottom:10px">&#9707;</div>No cases match filters</div></td></tr>';document.getElementById('pgInf').textContent='0 cases';drawPg();return;}
-  var html='';
-  for(var i=0;i<slice.length;i++){
-    var c=slice[i],sc=c.score>=75?'var(--red)':c.score>=55?'var(--orange)':c.score>=35?'var(--yellow)':'var(--green)';
-    var amt=c.amount>0?'&#8358;'+c.amount.toLocaleString()+(c.amounts&&c.amounts.length>1?' <span style="font-size:10px;color:var(--t2)">('+c.amounts.length+')</span>':''):'&mdash;';
-    var selCls=c.id===selId?' sel':'';
-    html+='<tr class="r row-in'+selCls+'" style="animation-delay:'+Math.min(i*0.03,0.35)+'s" onclick="openCase(\''+c.id+'\')">'+
-      '<td><span class="cid">'+c.id+'</span></td>'+
-      '<td><div class="ctitle" title="'+esc(c.title)+'">'+esc(c.title)+'</div></td>'+
-      '<td><span class="ftype">'+esc(c.fraudType)+'</span></td>'+
-      '<td><span class="pri '+c.priority+'">'+cap(c.priority)+'</span></td>'+
-      '<td><div class="score-bar"><span class="score-num" style="color:'+sc+'">'+c.score+'</span><div class="score-track"><div class="score-fill" style="width:'+c.score+'%;background:'+sc+'"></div></div></div></td>'+
-      '<td><span class="sb '+c.status+'">'+fmtSt(c.status)+'</span></td>'+
-      '<td><span class="dc">'+c.date+'</span></td>'+
-      '<td><span class="amt">'+amt+'</span></td>'+
-    '</tr>';
-  }
-  tb.innerHTML=html;
-  document.getElementById('pgInf').textContent=(s+1)+'\u2013'+e2+' of '+filtered.length.toLocaleString()+' cases';
-  drawPg();
-}
-function drawPg(){
-  var lo=Math.max(1,curPg-2),hi=Math.min(totPg,lo+4);if(hi-lo<4)lo=Math.max(1,hi-4);
-  var pg=document.getElementById('pgNums');pg.innerHTML='';
-  for(var i=lo;i<=hi;i++){var b=document.createElement('button');b.className='pgb'+(i===curPg?' on':'');b.textContent=i;(function(pp){b.onclick=function(){goPage(pp);};})(i);pg.appendChild(b);}
-  document.getElementById('pgF').disabled=curPg<=1;document.getElementById('pgP').disabled=curPg<=1;document.getElementById('pgN').disabled=curPg>=totPg;document.getElementById('pgL').disabled=curPg>=totPg;
-}
-function goPage(p){curPg=Math.max(1,Math.min(p,totPg));drawPage();}
-function changePgSz(){pgSz=parseInt(document.getElementById('pgSz').value);curPg=1;drawPage();}
-function doSort(f){
-  document.querySelectorAll('th').forEach(function(th){th.classList.remove('sort-asc','sort-desc');});
-  var cols=['id','title','fraudType','priority','score','status','date','amount'],idx=cols.indexOf(f);
-  if(idx>=0){if(sortF===f)sortD*=-1;else{sortF=f;sortD=-1;}document.querySelectorAll('thead th')[idx].classList.add(sortD===-1?'sort-desc':'sort-asc');}
-  sortData();drawPage();
-}
-
-// ═══════════════════════════════════════════════════════
-// DETAIL PANEL
-// ═══════════════════════════════════════════════════════
-var AI_NOTES={
-  'SIM Swap Fraud':'SIM swap confirmed. Attacker social-engineered the mobile operator to port the victim\'s number. Recommended: immediate account freeze, reverse unauthorised transfers, file complaint with telco fraud team, update customer contact details via out-of-band verification.',
-  'BEC / CEO Fraud':'Business Email Compromise detected. Attacker spoofed an executive email. Recommended: recall transaction via SWIFT gpi within 24h, forensic review of email headers, staff awareness brief, CBN notification if ₦50M+ threshold met.',
-  'Unauthorized Transfer':'Unauthorised fund movement. Source unclear — possible credential compromise, insider access or system exploit. Recommended: immediate transaction recall, account freeze, access log forensics, notify customer via out-of-band channel.',
-  'Phishing':'Active phishing campaign. Recommended: takedown request to registrar/host, force password reset on affected accounts, audit for unauthorised sessions, publish customer advisory via SMS/email.',
-  'Identity Theft':'Identity fraud indicators. Documentation likely forged or stolen. Recommended: enhanced KYC re-verification, biometric confirmation, fraud marker applied, notify NIMC if NIN involved.',
-  'ATM / Card Skimming':'Physical skimming confirmed. Recommended: block affected cards, arrange replacements, forensic sweep of flagged terminals, customer notification, widen inspection to nearby network.',
-  'CNP Card Fraud':'Card-not-present fraud from international IPs. Likely merchant data breach. Recommended: block/replace cards, notify Visa/Mastercard, review 3DS authentication logs.',
-  'Card Fraud':'Card compromise detected. Recommended: block and replace affected cards, notify customers, review recent transaction history.',
-  'Insider Threat':'Privileged access outside authorised scope. Recommended: immediate access revocation, preserve logs, HR and Legal engagement, CCTV review, EFCC referral. Do not alert employee until evidence secured.',
-  'Money Laundering':'Structuring/smurfing pattern. STR filing mandatory within 24h. Recommended: freeze accounts, file STR with NFIU, preserve records. Do not tip off account holders.',
-  'Sanctions Violation':'OFAC/sanctions match. Mandatory regulatory reporting. Recommended: hold transaction, notify CBN and correspondent bank, file SAR, preserve SWIFT trail.',
-  'Investment Scam':'Advance-fee or crypto fraud. Recommended: freeze beneficiary account, attempt reversal, notify customers, compile evidence for EFCC referral.',
-  'Account Takeover':'Account takeover indicators. Recommended: immediate re-authentication, review access logs, apply temporary restriction, notify customer via alternate channel.',
-  'Synthetic Identity':'Deepfake biometric bypass at onboarding. Recommended: suspend flagged accounts, notify NIMC for NIN validation, brief biometric vendor, submit CBN incident report.',
-  'Cyber Fraud':'Cyber-enabled fraud. Recommended: preserve system logs, engage IT security, isolate affected systems if malware suspected, notify cyber incident response team.',
-  'Unclassified':'Insufficient keyword signals to auto-classify. Manual review required. Check full email body for fraud indicators and assign appropriate fraud type and priority.',
-};
-function openCase(id){
-  selId=id;var c=null;for(var i=0;i<allCases.length;i++){if(allCases[i].id===id){c=allCases[i];break;}}if(!c)return;
-  document.getElementById('pnId').textContent=c.id;document.getElementById('pnTitle').textContent=c.title;
-  var sc=c.score>=75?'var(--red)':c.score>=55?'var(--orange)':c.score>=35?'var(--yellow)':'var(--green)';
-  var bkHtml='';Object.keys(c.scoreBreak||{}).forEach(function(k){var s=c.scoreBreak[k],bw=s.max>0?Math.round((s.pts/s.max)*100):0;bkHtml+='<div class="score-row"><span class="score-key"><span class="score-dot" style="background:'+s.color+'"></span>'+k+'</span><span style="display:flex;align-items:center;gap:8px"><div style="width:70px;height:3px;background:var(--bg-4);border-radius:2px;overflow:hidden"><div style="width:'+bw+'%;height:100%;background:'+s.color+';border-radius:2px"></div></div><span class="score-pts" style="color:'+s.color+'">'+s.pts+'</span><span class="score-max">/'+s.max+'</span></span></div>';});
-  var amtHtml='';if(c.amounts&&c.amounts.length>0){for(var a=0;a<c.amounts.length;a++)amtHtml+='<tr><td>Amount '+(a+1)+'</td><td>&#8358;'+c.amounts[a].toLocaleString()+'</td></tr>';if(c.amounts.length>1)amtHtml+='<tr class="amt-total"><td><strong>Total</strong></td><td><strong>&#8358;'+c.amount.toLocaleString()+'</strong></td></tr>';}else amtHtml='<tr><td colspan="2" style="color:var(--t2);font-size:11px">No amounts detected in email text</td></tr>';
-  var ai=(AI_NOTES[c.fraudType]||'Manual review required.')+(c.amount>0?' Total detected exposure: &#8358;'+c.amount.toLocaleString()+'.':'');
-  var ss=c.statusSource==='manual'?'Manually set':'Keyword auto-detection';
-  document.getElementById('pnBody').innerHTML=
-    '<div class="ds"><div class="ds-t">Case Details</div><div class="dg3">'+
-    '<div class="df"><div class="fl2">Priority</div><div class="fv"><span class="pri '+c.priority+'" style="font-size:11px">'+cap(c.priority)+'</span></div></div>'+
-    '<div class="df"><div class="fl2">Status</div><div class="fv"><span class="sb '+c.status+'" style="font-size:11px">'+fmtSt(c.status)+'</span></div></div>'+
-    '<div class="df"><div class="fl2">Sender Domain</div><div class="fv" style="font-size:11px;font-family:var(--mono)">'+esc(c.senderDomain)+'</div></div></div>'+
-    '<div style="margin-top:8px" class="dg2">'+
-    '<div class="df"><div class="fl2">Fraud Type</div><div class="fv">'+esc(c.fraudType)+'</div></div>'+
-    '<div class="df"><div class="fl2">Status Source</div><div class="fv" style="font-size:12px;color:var(--t1)">'+ss+'</div></div>'+
-    '<div class="df" style="margin-top:8px"><div class="fl2">Email Date</div><div class="fv mono">'+c.date+'</div></div>'+
-    '<div class="df" style="margin-top:8px"><div class="fl2">Internal Sender</div><div class="fv" style="font-size:12px;color:'+(c.isInternal?'var(--green)':'var(--t1)')+'">'+( c.isInternal?'&#10003; Yes':'&#10007; External')+'</div></div></div></div>'+
-    '<div class="ds"><div class="ds-t">Risk Score Breakdown</div><div class="score-card"><div class="score-big"><div class="score-circle" style="color:'+sc+';border-color:'+sc+'">'+c.score+'</div><div><div style="font-size:14px;font-weight:700;color:var(--t0)">'+cap(c.priority)+' Risk</div><div style="font-size:11.5px;color:var(--t1);margin-top:3px">Score '+c.score+'/100 &mdash; 6 signals</div><div style="font-size:10.5px;color:var(--t2);margin-top:2px">'+(c.score>=75?'Immediate action required':c.score>=55?'High-priority review':c.score>=35?'Routine investigation':'Low-priority, monitor')+'</div></div></div>'+bkHtml+'</div></div>'+
-    '<div class="ds"><div class="ds-t">Amount Extraction</div><div style="background:var(--bg-3);border:1px solid var(--border);border-radius:8px;padding:12px"><table class="amt-table">'+amtHtml+'</table></div></div>'+
-    '<div class="ds"><div class="ds-t">AI Recommendation</div><div class="ai-box"><div class="ai-lbl">&#11041; FraudDesq Intelligence</div><div class="ai-txt">'+ai+'</div></div></div>'+
-    '<div class="ds"><div class="ds-t">Source Email</div><div class="email-box"><div class="email-from">From: '+esc(c.emailFrom||'Unknown')+'</div><div class="email-subj">'+esc(c.emailSubject||c.title)+'</div><div class="email-body">'+esc((c.emailBody||'').slice(0,380))+'</div></div></div>'+
-    '<div class="ds"><div class="ds-t">Activity Timeline</div>'+
-    '<div class="tl-item"><div class="tl-dot b"></div><div><div class="tl-act">Email ingested via Microsoft Graph API</div><div class="tl-meta">'+c.date+' &middot; Graph API</div></div></div>'+
-    '<div class="tl-item"><div class="tl-dot b"></div><div><div class="tl-act">Fraud type classified: '+esc(c.fraudType)+'</div><div class="tl-meta">'+c.date+'</div></div></div>'+
-    '<div class="tl-item"><div class="tl-dot b"></div><div><div class="tl-act">Priority scored: '+cap(c.priority)+' ('+c.score+'/100)</div><div class="tl-meta">'+c.date+'</div></div></div>'+
-    '<div class="tl-item"><div class="tl-dot b"></div><div><div class="tl-act">Status detected: '+fmtSt(c.status)+' ('+ss+')</div><div class="tl-meta">'+c.date+'</div></div></div>'+
-    '<div class="tl-item"><div class="tl-dot b"></div><div><div class="tl-act">'+(c.amounts&&c.amounts.length>0?c.amounts.length+' amount(s) extracted &mdash; &#8358;'+c.amount.toLocaleString():'No amounts detected')+'</div><div class="tl-meta">'+c.date+'</div></div></div></div>'+
-    '<div class="pn-btns"><button class="pb-prog" onclick="setStatus(\''+id+'\',\'in-progress\')">In Progress</button><button class="pb-esc" onclick="setStatus(\''+id+'\',\'escalated\')">Escalate</button><button class="pb-cls" onclick="setStatus(\''+id+'\',\'closed\')">Close Case</button></div>';
-  document.getElementById('detPanel').classList.add('open');drawPage();
-}
-function closePanel(){selId=null;document.getElementById('detPanel').classList.remove('open');drawPage();}
-function setStatus(id,ns){for(var i=0;i<allCases.length;i++){if(allCases[i].id===id){allCases[i].status=ns;allCases[i].statusSource='manual';break;}}updateStats();openCase(id);}
-
-// ═══════════════════════════════════════════════════════
-// NEW CASE / POWER BI
-// ═══════════════════════════════════════════════════════
-function openNewCase(){document.getElementById('modalNew').classList.add('show');}
-function closeNewCase(){document.getElementById('modalNew').classList.remove('show');}
-function submitNewCase(){
-  caseManualNum++;var yr=new Date().getFullYear();var nid='FRD-'+yr+'-M'+String(caseManualNum).padStart(3,'0');
-  var title=document.getElementById('nTitle').value||'Manual Case',ftype=document.getElementById('nType').value;
-  var overPri=document.getElementById('nPri').value,overStat=document.getElementById('nStat').value;
-  var amt=parseInt(document.getElementById('nAmt').value)||0;
-  var fraudRule=detectFraudType(title+' '+ftype),amounts=amt>0?[amt]:[];
-  var scored=scoreSignals(fraudRule,amounts,title,'',mbAddr);
-  var nc={id:nid,title:title,fraudType:ftype,priority:overPri||scored.label,score:scored.score,scoreBreak:scored.breakdown,status:overStat||'open',statusSource:overPri?'manual':'auto',date:new Date().toLocaleString('en-GB',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}),rawDate:new Date(),amounts:amounts,amount:amt,emailSubject:title,emailBody:'Manually created case.',emailFrom:'Manual Entry',senderDomain:'manual',isInternal:false};
-  allCases.unshift(nc);closeNewCase();renderAll();openCase(nid);
-}
-function openPBI(){
-  document.getElementById('modalPBI').classList.add('show');
-  var el=document.getElementById('pbiSnap'),byType={},totExp=0,crit=0,hs=0,avg=0;
-  for(var i=0;i<allCases.length;i++){var c=allCases[i];byType[c.fraudType||'Unknown']=(byType[c.fraudType||'Unknown']||0)+1;totExp+=(c.amount||0);if(c.priority==='critical')crit++;if((c.score||0)>hs)hs=c.score;avg+=c.score||0;}
-  avg=allCases.length>0?Math.round(avg/allCases.length):0;
-  var top=null,topN=0;for(var k in byType){if(byType[k]>topN){topN=byType[k];top=k;}}
-  el.innerHTML='<div class="pbi-row"><span class="pbi-rl">Total Cases</span><span class="pbi-rv">'+allCases.length.toLocaleString()+'</span></div><div class="pbi-row"><span class="pbi-rl">Total Exposure</span><span class="pbi-rv">&#8358;'+totExp.toLocaleString()+'</span></div><div class="pbi-row"><span class="pbi-rl">Critical Cases</span><span class="pbi-rv" style="color:var(--red)">'+crit+'</span></div><div class="pbi-row"><span class="pbi-rl">Avg Risk Score</span><span class="pbi-rv">'+avg+' / 100</span></div><div class="pbi-row"><span class="pbi-rl">Highest Score</span><span class="pbi-rv">'+hs+' / 100</span></div><div class="pbi-row"><span class="pbi-rl">Top Fraud Type</span><span class="pbi-rv">'+(top||'&mdash;')+'</span></div><div class="pbi-row"><span class="pbi-rl">Last Sync</span><span class="pbi-rv">'+new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})+'</span></div>';
-}
-function closePBI(){document.getElementById('modalPBI').classList.remove('show');}
-function pickFmt(f){expFmt=f;document.getElementById('efCSV').classList.toggle('sel',f==='csv');document.getElementById('efJSON').classList.toggle('sel',f==='json');}
-function getExpSet(){var dr=document.getElementById('expRng').value,sf=document.getElementById('expStat').value,now=new Date(),days=dr==='7d'?7:dr==='30d'?30:dr==='90d'?90:0;return allCases.filter(function(c){if(sf&&c.status!==sf)return false;if(days){var cut=new Date(now-days*864e5);if((c.rawDate||new Date(c.date))<cut)return false;}return true;});}
-function doExport(){var cases=getExpSet();if(!cases.length){alert('No cases match the selected filters.');return;}if(expFmt==='csv')doCSV(cases);else doJSON(cases);}
-function doCSV(cases){var h=['case_id','title','fraud_type','priority','risk_score','status','status_source','date','total_amount_ngn','amount_count','email_subject','email_from','sender_domain','is_internal_sender'];var r=cases.map(function(c){return[c.id,'"'+(c.title||'').replace(/"/g,'""')+'"',c.fraudType,c.priority,c.score,c.status,c.statusSource,c.date,c.amount,(c.amounts&&c.amounts.length)||0,'"'+(c.emailSubject||'').replace(/"/g,'""')+'"','"'+(c.emailFrom||'').replace(/"/g,'""')+'"',c.senderDomain,c.isInternal?'true':'false'].join(',');});dlB([h.join(',')].concat(r).join('\n'),'frauddesq_'+dStr()+'.csv','text/csv');}
-function doJSON(cases){var d=cases.map(function(c){return{case_id:c.id,title:c.title,fraud_type:c.fraudType,priority:c.priority,risk_score:c.score,status:c.status,status_source:c.statusSource,date:c.date,total_amount_ngn:c.amount,amount_count:(c.amounts&&c.amounts.length)||0,individual_amounts:c.amounts||[],email_subject:c.emailSubject,email_from:c.emailFrom,sender_domain:c.senderDomain,is_internal_sender:c.isInternal};});dlB(JSON.stringify(d,null,2),'frauddesq_'+dStr()+'.json','application/json');}
-function dlB(content,filename,type){var blob=new Blob([content],{type:type}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=filename;a.click();setTimeout(function(){URL.revokeObjectURL(url);},1000);}
-function dStr(){var d=new Date();return d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0');}
-
-// ── NAV / UTILS ───────────────────────────────────────
-function navTo(el){document.querySelectorAll('.ni').forEach(function(n){n.classList.remove('on');});el.classList.add('on');}
-function setTab(el,tab){document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('on');});el.classList.add('on');activeTab=tab;doFilter();}
-function cap(s){return s?s.charAt(0).toUpperCase()+s.slice(1):'';}
-function fmtSt(s){if(s==='in-progress')return'In Progress';if(s==='pending')return'Pending';return cap(s);}
-function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
-
-// ═══════════════════════════════════════════════════════
-// INIT
-// ═══════════════════════════════════════════════════════
-(function init(){
-  var params=new URLSearchParams(window.location.search);
-  if(params.get('state')==='fd_oauth_v4'){handleCallback();return;}
-  var stored=null,storedMb=null;
-  try{stored=sessionStorage.getItem('fd_tok');storedMb=sessionStorage.getItem('fd_mb_saved');}catch(e){}
-  if(stored){tokenVal=stored;mbAddr=storedMb||'';document.getElementById('authWrap').classList.add('gone');setConnected();fetchAllEmails();return;}
-  document.getElementById('authWrap').classList.remove('gone');
-})();
-
-})();
 </script>
+
 </body>
 </html>
