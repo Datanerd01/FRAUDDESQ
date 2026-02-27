@@ -5,12 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>FraudDesq – Fidelity Bank</title>
 
-<!-- MSAL -->
+<!-- MSAL (stable CDN) -->
 <script src="https://alcdn.msauth.net/browser/2.39.0/js/msal-browser.min.js"></script>
 
 <style>
 body{font-family:Arial, sans-serif;background:#0b1220;color:#fff;margin:0}
-button{padding:10px 18px;border:none;border-radius:6px;background:#2563eb;color:#fff;cursor:pointer}
+button{padding:12px 20px;border:none;border-radius:8px;background:#2563eb;color:#fff;cursor:pointer;font-size:16px}
 #overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:#0b1220;display:flex;flex-direction:column;align-items:center;justify-content:center}
 .hidden{display:none}
 .table{width:100%;border-collapse:collapse;margin-top:20px}
@@ -21,14 +21,17 @@ button{padding:10px 18px;border:none;border-radius:6px;background:#2563eb;color:
 
 <body>
 
+<!-- LOGIN OVERLAY -->
 <div id="overlay">
 <h2>Connect Outlook Mailbox</h2>
 <button id="loginBtn">Connect via Microsoft</button>
 </div>
 
+<!-- DASHBOARD -->
 <div id="app" class="hidden">
-<h2>Case Dashboard <span class="badge" id="status">Connected</span></h2>
+<h2>Case Dashboard <span class="badge">Connected</span></h2>
 <p id="mailbox"></p>
+
 <table class="table">
 <thead>
 <tr>
@@ -44,14 +47,25 @@ button{padding:10px 18px;border:none;border-radius:6px;background:#2563eb;color:
 
 <script>
 
-// ================= CONFIG =================
+// ================= IMPORTANT CONFIG =================
+// REPLACE THESE VALUES
+const CLIENT_ID = "0d01af51-0a97-4f8a-886e-7b5f72bc5d76";
+const TENANT_ID = "2a50328f-787b-4d68-b2e3-1c12440252ab";
+
+// SHARED MAILBOX
 const sharedMailbox = "ElectronicFraudTeam@fidelitybank.ng";
 
+
+// ================= MSAL CONFIG =================
 const msalConfig = {
     auth: {
-        clientId: "YOUR_CLIENT_ID",
-        authority: "https://login.microsoftonline.com/YOUR_TENANT_ID",
+        clientId: CLIENT_ID,
+        authority: `https://login.microsoftonline.com/${TENANT_ID}`,
         redirectUri: window.location.origin
+    },
+    cache: {
+        cacheLocation: "localStorage",
+        storeAuthStateInCookie: false
     }
 };
 
@@ -62,44 +76,53 @@ const loginRequest = {
 const msalInstance = new msal.PublicClientApplication(msalConfig);
 
 
-// ================= LOGIN =================
-document.getElementById("loginBtn").addEventListener("click", () => {
-    msalInstance.loginRedirect(loginRequest);
-});
+// ================= START APP =================
+window.addEventListener("DOMContentLoaded", async () => {
 
+    console.log("App loaded");
 
-// ================= HANDLE REDIRECT =================
-msalInstance.handleRedirectPromise()
-.then(async response => {
+    // Attach login button
+    const btn = document.getElementById("loginBtn");
 
-    let account = null;
+    btn.addEventListener("click", () => {
+        console.log("Login button clicked");
+        msalInstance.loginRedirect(loginRequest);
+    });
 
-    if (response) {
-        account = response.account;
-        msalInstance.setActiveAccount(account);
-    } else {
-        account = msalInstance.getActiveAccount();
+    // Handle redirect
+    try {
+        const response = await msalInstance.handleRedirectPromise();
+
+        let account = null;
+
+        if (response) {
+            account = response.account;
+            msalInstance.setActiveAccount(account);
+        } else {
+            account = msalInstance.getActiveAccount();
+        }
+
+        if (account) {
+            console.log("User authenticated");
+            showDashboard();
+            await loadEmails();
+        }
+
+    } catch (err) {
+        console.error("AUTH ERROR", err);
     }
-
-    if (account) {
-        showDashboard(account);
-        await loadEmails();
-    }
-
-}).catch(err => {
-    console.error("AUTH ERROR", err);
 });
 
 
 // ================= UI =================
-function showDashboard(account) {
+function showDashboard() {
     document.getElementById("overlay").classList.add("hidden");
     document.getElementById("app").classList.remove("hidden");
     document.getElementById("mailbox").innerText = sharedMailbox;
 }
 
 
-// ================= GRAPH =================
+// ================= TOKEN =================
 async function getToken() {
 
     const request = {
@@ -108,6 +131,9 @@ async function getToken() {
     };
 
     const response = await msalInstance.acquireTokenSilent(request);
+
+    console.log("Token acquired");
+
     return response.accessToken;
 }
 
@@ -116,10 +142,11 @@ async function getToken() {
 async function loadEmails() {
 
     try {
-
         const token = await getToken();
 
         const endpoint = `https://graph.microsoft.com/v1.0/users/${sharedMailbox}/messages?$top=20&$orderby=receivedDateTime desc`;
+
+        console.log("Calling Graph", endpoint);
 
         const res = await fetch(endpoint, {
             headers: {
@@ -128,7 +155,7 @@ async function loadEmails() {
         });
 
         if (!res.ok) {
-            throw new Error("Graph failed: " + res.status);
+            throw new Error("Graph failed " + res.status);
         }
 
         const data = await res.json();
@@ -137,7 +164,7 @@ async function loadEmails() {
 
     } catch (err) {
         console.error("GRAPH ERROR", err);
-        alert("Unable to access shared mailbox. Ensure you have Full Access.");
+        alert("Shared mailbox access failed. Ensure Full Access and admin consent.");
     }
 }
 
@@ -147,6 +174,11 @@ function renderCases(messages) {
 
     const table = document.getElementById("cases");
     table.innerHTML = "";
+
+    if (!messages || messages.length === 0) {
+        table.innerHTML = "<tr><td colspan='4'>No emails found</td></tr>";
+        return;
+    }
 
     messages.forEach((mail, i) => {
 
